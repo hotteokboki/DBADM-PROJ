@@ -3,8 +3,9 @@ import { Logo, Menu, Cart } from "../icons/index"
 import { avatar } from "../assets/imagedata"
 import FloatingCart from "../components/FloatingCart"
 import { useGlobalContext } from "../context/context"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import React, { useState } from "react";
+import axios from "axios";
 
 const navLinks = [
   { name: "home", path: "/" },
@@ -17,6 +18,20 @@ const Navigator = () => {
   const { showSidebar, showCart, hideCart, state } = useGlobalContext()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const toggleDropdown = () => setIsDropdownOpen(prev => !prev);
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    try {
+      await axios.post(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/logout`, {}, {
+        withCredentials: true, // important for sending cookies
+      });
+
+      navigate("/login");
+    } catch (error) {
+      console.error("Logout failed:", error);
+      alert("Failed to log out. Please try again.");
+    }
+  };
 
   return (
     <NavigatorWrapper>
@@ -58,6 +73,7 @@ const Navigator = () => {
             {isDropdownOpen && (
               <div className="dropdown-menu">
                 <Link to="/login">Login</Link>
+                <button onClick={handleLogout} className="logout-button">Logout</button>
               </div>
             )}
           </div>

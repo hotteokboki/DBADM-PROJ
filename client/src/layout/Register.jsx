@@ -299,7 +299,7 @@ const PasswordRules = styled.ul`
 
 const Snackbar = styled.div`
   position: absolute;
-  bottom: 30px;
+  top: 30px;
   background-color: ${(props) =>
     props.type === "success" ? "hsl(140, 70%, 40%)" : "hsl(0, 70%, 50%)"};
   color: white;

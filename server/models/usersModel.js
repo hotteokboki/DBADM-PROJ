@@ -27,3 +27,10 @@ exports.createUser = async (first_name, last_name, email, hashedPassword) => {
     role_id: 1
   };
 };
+
+exports.getUserByEmail = async (email) => {
+  const query = `SELECT * FROM users WHERE email = ? LIMIT 1`;
+  const [rows] = await mySQL.query(query, [email]);
+
+  return rows[0]; // return the first matched user (or undefined)
+};

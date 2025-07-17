@@ -1,16 +1,58 @@
-import React, { useState } from "react"
-import styled from "styled-components"
-import { Link } from "react-router-dom"
+import React, { useState } from "react";
+import styled from "styled-components";
+import { Link, useNavigate } from "react-router-dom";
+import axios from "axios";
 
 const Login = () => {
-  const [email, setEmail] = useState("")
-  const [password, setPassword] = useState("")
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [showSnackbar, setShowSnackbar] = useState(false);
+  const navigate = useNavigate(); // ✅ Added navigation
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    // Handle login logic here
-    console.log({ email, password })
-  }
+  const showError = (message) => {
+    setError(message);
+    setSuccess("");
+    setShowSnackbar(true);
+    setTimeout(() => setShowSnackbar(false), 3000);
+  };
+
+  const showSuccess = (message) => {
+    setSuccess(message);
+    setError("");
+    setShowSnackbar(true);
+    setTimeout(() => setShowSnackbar(false), 3000);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/login`,
+        { email, password },
+        {
+          withCredentials: true,
+        }
+      );
+
+      if (response.data.success) {
+        showSuccess(response.data.message || "Login Successful!");
+        setTimeout(() => {
+          navigate("/");
+        }, 3000);
+      } else {
+        showError(response.data.message || "Login failed.");
+      }
+    } catch (error) {
+      if (error.response && error.response.data) {
+        showError(error.response.data.message || "Login failed.");
+      } else {
+        showError("Something went wrong. Please try again.");
+      }
+      console.error("Login error:", error);
+    }
+  };
 
   return (
     <LoginWrapper>
@@ -41,11 +83,17 @@ const Login = () => {
           </p>
         </form>
       </div>
-    </LoginWrapper>
-  )
-}
 
-export default Login
+      {showSnackbar && (
+        <Snackbar type={error ? "error" : "success"}>
+          {error || success}
+        </Snackbar>
+      )}
+    </LoginWrapper>
+  );
+};
+
+export default Login;
 
 const LoginWrapper = styled.div`
   height: 100vh;
@@ -53,6 +101,7 @@ const LoginWrapper = styled.div`
   align-items: center;
   justify-content: center;
   background: hsl(210, 36%, 96%);
+  position: relative;
 
   .login-card {
     background: white;
@@ -123,4 +172,32 @@ const LoginWrapper = styled.div`
       }
     }
   }
-`
+`;
+
+const Snackbar = styled.div`
+  position: absolute;
+  top: 30px;
+  background-color: ${(props) =>
+    props.type === "success" ? "hsl(140, 70%, 40%)" : "hsl(0, 70%, 50%)"};
+  color: white;
+  padding: 1rem 2rem;
+  border-radius: 8px;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
+  animation: fadeInOut 3s ease-in-out;
+
+  @keyframes fadeInOut {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    10%,
+    90% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+    100% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+  }
+`;
