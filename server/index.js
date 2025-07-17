@@ -1,6 +1,6 @@
 const express = require("express");
 const cors = require("cors");
-const { getUserData } = require("../controllers/usersController");
+const { getUserData } = require("../models/usersModel.js");
 require("dotenv").config();
 
 const app = express();
