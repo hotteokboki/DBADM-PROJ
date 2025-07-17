@@ -4,6 +4,7 @@ import { avatar } from "../assets/imagedata"
 import FloatingCart from "../components/FloatingCart"
 import { useGlobalContext } from "../context/context"
 import { Link } from "react-router-dom"
+import React, { useState } from "react";
 
 const navLinks = [
   { name: "home", path: "/" },
@@ -14,6 +15,8 @@ const navLinks = [
 
 const Navigator = () => {
   const { showSidebar, showCart, hideCart, state } = useGlobalContext()
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const toggleDropdown = () => setIsDropdownOpen(prev => !prev);
 
   return (
     <NavigatorWrapper>
@@ -47,9 +50,17 @@ const Navigator = () => {
             <Cart />
             {state.totalCartSize > 0 && <span>{state.totalCartSize}</span>}
           </button>
-          <button className="avatar-btn">
-            <img src={avatar} alt="avatar" />
-          </button>
+          <div className="avatar-dropdown">
+            <button className="avatar-btn" onClick={toggleDropdown}>
+              <img src={avatar} alt="avatar" />
+            </button>
+
+            {isDropdownOpen && (
+              <div className="dropdown-menu">
+                <Link to="/login">Login</Link>
+              </div>
+            )}
+          </div>
           <FloatingCart className={`${state.showingCart ? "active" : ""}`} />
         </div>
       </nav>

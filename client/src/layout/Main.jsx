@@ -5,6 +5,8 @@ import Product from "./Product.jsx"
 import Home from "./Home.jsx"
 import Collections from "./Collections.jsx"
 import About from "./About.jsx"
+import Login from "./Login.jsx"
+import Register from "./Register.jsx"
 
 const Main = () => {
   return (
@@ -14,6 +16,8 @@ const Main = () => {
         <Route path="/shop" element={<ProductList />} />
         <Route path="/collections" element={<Collections />} />
         <Route path="/about" element={<About />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/product/:id" element={<Product />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
