@@ -3,15 +3,25 @@ import { Close } from "../icons/index"
 import { useGlobalContext } from "../context/context"
 import { Link } from "react-router-dom"
 
-const sideBarLinks = [
-  { name: "Home", path: "/" },
-  { name: "Shop", path: "/shop" },
-  { name: "Collections", path: "/collections" },
-  { name: "About", path: "/about" },
-]
-
 const Sidebar = ({ isShowing }) => {
-  const { hideSidebar } = useGlobalContext()
+  const { hideSidebar, state } = useGlobalContext()
+  const role = state.userRole;
+
+  console.log("Sidebar User Role:", role);
+
+  const sideBarLinks = role === 2
+    ? [
+        { name: "Add Item", path: "/add-item" },
+        { name: "Update Item", path: "/update-item" },
+        { name: "Transaction Logs", path: "/transaction-logs" },
+        { name: "Admin Logs", path: "/admin-logs" },
+      ]
+    : [
+        { name: "Home", path: "/" },
+        { name: "Shop", path: "/shop" },
+        { name: "Collections", path: "/collections" },
+        { name: "About", path: "/about" },
+      ];
 
   return (
     <SidebarWrapper className={isShowing && "active"}>

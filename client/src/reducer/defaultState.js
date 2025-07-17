@@ -6,5 +6,6 @@ export const defaultState = {
   showSidebar: false,
   screenWidth: window.innerWidth,
   showingOverlay: false,
-  showingCart: false
+  showingCart: false,
+  userRole: null,
 }

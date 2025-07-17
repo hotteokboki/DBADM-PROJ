@@ -16,11 +16,32 @@ import {
   UPDATE_CART,
   GET_TOTAL_CART,
 } from "../reducer/actions"
+import axios from "axios";
 
 const AppContext = createContext()
 
 const AppProvider = ({ children }) => {
   const [state, dispatch] = useReducer(reducer, defaultState)
+
+  // Inside AppProvider
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const response = await axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/me`, {
+          withCredentials: true,
+        });
+        if (response.data.success) {
+          const role = response.data.user.role;
+          console.log("SET USER ROLE VAL: ",role);
+          dispatch({ type: "SET_USER_ROLE", payload: role });
+        }
+      } catch (err) {
+        console.log("User not logged in or session expired.");
+      }
+    };
+
+    fetchUser();
+  }, []);
 
   const showSidebar = () => {
     dispatch({ type: SHOW_SIDEBAR })

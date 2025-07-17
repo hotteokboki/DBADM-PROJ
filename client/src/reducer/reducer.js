@@ -1,3 +1,5 @@
+import { defaultState } from "./defaultState"; // make sure defaultState is imported
+
 const reducer = (state, action) => {
   switch (action.type) {
     case "SHOW_SIDEBAR":
@@ -11,8 +13,10 @@ const reducer = (state, action) => {
     case "HIDE_OVERLAY":
       return { ...state, showingOverlay: false }
     case "SHOW_CART":
+      if (state.userRole === 2) return state // prevent admin from seeing cart
       return { ...state, showingCart: true }
     case "HIDE_CART":
+      if (state.userRole === 2) return state // optional: allow hide anyway
       return { ...state, showingCart: false }
     case "INCREASE_AMOUNT":
       const increasedAmount = state.amount + 1
@@ -24,12 +28,12 @@ const reducer = (state, action) => {
       }
       return { ...state, amount: decreasedAmount() }
     case "ADD_TO_CART":
+      if (state.userRole === 2) return state // admin cannot add to cart
       const { item, amount } = action.payload
       const hasItem = state.cart.find((product) => {
         return product.productId === item.productId
       })
       if (hasItem) {
-        console.log("the item exists")
         const updatedItem = { ...hasItem, amount }
         return { ...state, amount: 0, cart: [updatedItem] }
       } else {
@@ -51,6 +55,13 @@ const reducer = (state, action) => {
       return { ...state, totalCartSize: totalCartCount }
     case "READ_SCREENWIDTH":
       return { ...state, screenWidth: action.payload }
+    case "SET_USER_ROLE":
+      return { ...state, userRole: action.payload }
+    case "RESET_ALL":
+      return {
+        ...defaultState,
+        screenWidth: state.screenWidth, // optional: preserve this
+      };
     default:
       return state
   }

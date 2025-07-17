@@ -7,18 +7,34 @@ import { Link, useNavigate } from "react-router-dom"
 import React, { useState } from "react";
 import axios from "axios";
 
-const navLinks = [
-  { name: "home", path: "/" },
-  { name: "shop", path: "/shop" },
-  { name: "collections", path: "/collections" },
-  { name: "about", path: "/about" },
-]
-
 const Navigator = () => {
   const { showSidebar, showCart, hideCart, state } = useGlobalContext()
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const toggleDropdown = () => setIsDropdownOpen(prev => !prev);
   const navigate = useNavigate();
+  const role = state.userRole;
+
+  console.log("Navigator User Role:", role);
+
+  let navLinks = [];
+
+  if (role === 2) {
+    // Admin
+    navLinks = [
+      { name: "add item", path: "/add-item" },
+      { name: "update item", path: "/update-item" },
+      { name: "transaction logs", path: "/transaction-logs" },
+      { name: "admin logs", path: "/admin-logs" },
+    ];
+  } else {
+    // Customer or Guest
+    navLinks = [
+      { name: "home", path: "/" },
+      { name: "shop", path: "/shop" },
+      { name: "collections", path: "/collections" },
+      { name: "about", path: "/about" },
+    ];
+  }
 
   const handleLogout = async () => {
     try {
@@ -52,19 +68,21 @@ const Navigator = () => {
           </ul>
         </div>
         <div className="nav-right">
-          <button
-            onClick={() => {
-              if (state.showingCart) {
-                hideCart()
-              } else {
-                showCart()
-              }
-            }}
-            className="cart-btn"
-          >
-            <Cart />
-            {state.totalCartSize > 0 && <span>{state.totalCartSize}</span>}
-          </button>
+          {role === 1 && (
+            <button
+              onClick={() => {
+                if (state.showingCart) {
+                  hideCart();
+                } else {
+                  showCart();
+                }
+              }}
+              className="cart-btn"
+            >
+              <Cart />
+              {state.totalCartSize > 0 && <span>{state.totalCartSize}</span>}
+            </button>
+          )}
           <div className="avatar-dropdown">
             <button className="avatar-btn" onClick={toggleDropdown}>
               <img src={avatar} alt="avatar" />
@@ -72,8 +90,8 @@ const Navigator = () => {
 
             {isDropdownOpen && (
               <div className="dropdown-menu">
-                <Link to="/login">Login</Link>
-                <button onClick={handleLogout} className="logout-button">Logout</button>
+                {!role && <Link to="/login">Login</Link>}
+                {role && <button onClick={handleLogout} className="logout-button">Logout</button>}
               </div>
             )}
           </div>
