@@ -8,4 +8,9 @@ export const defaultState = {
   showingOverlay: false,
   showingCart: false,
   userRole: null,
+  snackbar: {
+    message: "",
+    type: "", // "success", "error", etc.
+    visible: false,
+  }
 }

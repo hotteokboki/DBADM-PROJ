@@ -3,8 +3,11 @@ const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
 
+const path = require('path');
 const userRoutes = require("./routes/userRoutes.js"); 
 const authRoutes = require("./routes/authRoutes.js");
+const uploadRoutes = require("./routes/uploadRoutes.js"); 
+const productRoutes = require("./routes/productsRoutes.js")
 
 require("dotenv").config();
 
@@ -30,10 +33,14 @@ app.use(session({
 }));
 
 app.use(express.json());
+// Serve uploaded files
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
 app.use("/api/users", userRoutes);
+app.use("/api/upload", uploadRoutes); 
 app.use("/auth", authRoutes);
+app.use("/api/products", productRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to DBADM Proj!");

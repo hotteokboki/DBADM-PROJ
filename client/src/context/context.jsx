@@ -102,6 +102,14 @@ const AppProvider = ({ children }) => {
     dispatch({ type: READ_SCREENWIDTH, payload: window.innerWidth })
   }
 
+  const showSnackbar = (message, type = "success") => {
+    dispatch({ type: "SHOW_SNACKBAR", payload: { message, type } })
+
+    setTimeout(() => {
+      dispatch({ type: "HIDE_SNACKBAR" })
+    }, 3000) // auto-hide after 3 seconds
+  }
+
   useEffect(() => {
     getTotalCartAmount()
   }, [state.amount, state.cart])
@@ -135,6 +143,7 @@ const AppProvider = ({ children }) => {
         updateCart,
         removeItem,
         getTotalCartAmount,
+        showSnackbar,
       }}
     >
       {children}

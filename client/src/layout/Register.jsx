@@ -3,7 +3,7 @@ import styled from "styled-components"
 import { Link } from "react-router-dom"
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
-
+import { useGlobalContext } from "../context/context";
 
 const Register = () => {
   const [formData, setFormData] = useState({
@@ -13,10 +13,8 @@ const Register = () => {
     password: "",
     confirmPassword: "",
   })
-  const [error, setError] = useState("")
-  const [success, setSuccess] = useState("")
-  const [showSnackbar, setShowSnackbar] = useState(false)
-  const navigate = useNavigate()
+  const { showSnackbar } = useGlobalContext();
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
@@ -26,20 +24,6 @@ const Register = () => {
     const regex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     return regex.test(email)
   }
-
-    const showError = (message) => {
-        setError(message);
-        setSuccess(""); // clear any success message
-        setShowSnackbar(true);
-        setTimeout(() => setShowSnackbar(false), 3000);
-    };
-
-    const showSuccess = (message) => {
-        setSuccess(message);
-        setError(""); // clear any error message
-        setShowSnackbar(true);
-        setTimeout(() => setShowSnackbar(false), 3000);
-    };
 
   const passwordChecks = {
     length: formData.password.length >= 8,
@@ -51,51 +35,51 @@ const Register = () => {
 
   const allChecksPassed = Object.values(passwordChecks).every(Boolean)
 
-    const handleSubmit = async (e) => {
-        e.preventDefault();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
 
-        // Frontend validations
-        if (!validateEmail(formData.email)) {
-            return showError("Please enter a valid email address.");
-        }
+    // Frontend validations
+    if (!validateEmail(formData.email)) {
+      showSnackbar("Please enter a valid email address.", "error")
+    }
 
-        if (!allChecksPassed) {
-            return showError("Password does not meet the required strength.");
-        }
+    if (!allChecksPassed) {
+      showSnackbar("Password does not meet the required strength.", "error")
+    }
 
-        if (formData.password !== formData.confirmPassword) {
-            return showError("Passwords do not match.");
-        }
-        console.log("data: ", formData)
+    if (formData.password !== formData.confirmPassword) {
+      showSnackbar("Passwords do not match.", "error")
+    }
+    console.log("data: ", formData)
 
-        try {
-            const response = await axios.post(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/register`, {
-            first_name: formData.firstName,
-            last_name: formData.lastName,
-            email: formData.email,
-            password: formData.password,
-            });
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/register`, {
+        first_name: formData.firstName,
+        last_name: formData.lastName,
+        email: formData.email,
+        password: formData.password,
+      });
 
-            if (response.data.success) {
-                showSuccess(response.data.message || "Registered successfully!");
-                
-                // Redirect after the message has been visible
-                setTimeout(() => {
-                    navigate("/login");
-                }, 3000);
-            } else {
-                showError(response.data.message || "Registration failed.");
-            }
-        } catch (error) {
-            // Handle known and unknown errors
-            if (error.response && error.response.data) {
-                showError(error.response.data.message || "Registration failed.");
-            } else {
-                showError("Something went wrong. Please try again.");
-            }
-            console.error("Registration error:", error);
-        }
-    };
+      if (response.data.success) {
+        showSnackbar(response.data.message, "success");
+
+        // Redirect after the message has been visible
+        setTimeout(() => {
+          navigate("/login");
+        }, 3000);
+      } else {
+        showSnackbar(response.data.message, "error")
+      }
+    } catch (error) {
+      // Handle known and unknown errors
+      if (error.response && error.response.data) {
+        showSnackbar(error.response.data.message, "error")
+      } else {
+        showSnackbar("Something went wrong. Please try again.", "error")
+      }
+      console.error("Registration error:", error);
+    }
+  };
 
   return (
     <RegisterWrapper>
@@ -111,7 +95,7 @@ const Register = () => {
             value={formData.firstName}
             onChange={handleChange}
           />
-        <label htmlFor="lastName">Last Name</label>
+          <label htmlFor="lastName">Last Name</label>
           <input
             type="text"
             id="lastName"
@@ -175,12 +159,6 @@ const Register = () => {
           </p>
         </form>
       </div>
-
-      {showSnackbar && (
-        <Snackbar type={error ? "error" : "success"}>
-            {error || success}
-        </Snackbar>
-        )}
     </RegisterWrapper>
   )
 }
@@ -296,31 +274,3 @@ const PasswordRules = styled.ul`
     left: 0;
   }
 `
-
-const Snackbar = styled.div`
-  position: absolute;
-  top: 30px;
-  background-color: ${(props) =>
-    props.type === "success" ? "hsl(140, 70%, 40%)" : "hsl(0, 70%, 50%)"};
-  color: white;
-  padding: 1rem 2rem;
-  border-radius: 8px;
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.15);
-  animation: fadeInOut 3s ease-in-out;
-
-  @keyframes fadeInOut {
-    0% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-    10%,
-    90% {
-      opacity: 1;
-      transform: translateY(0);
-    }
-    100% {
-      opacity: 0;
-      transform: translateY(20px);
-    }
-  }
-`;

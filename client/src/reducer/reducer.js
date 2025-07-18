@@ -62,6 +62,23 @@ const reducer = (state, action) => {
         ...defaultState,
         screenWidth: state.screenWidth, // optional: preserve this
       };
+    case "SHOW_SNACKBAR":
+      return {
+        ...state,
+        snackbar: {
+          message: action.payload.message,
+          type: action.payload.type,
+          visible: true,
+        },
+      }
+    case "HIDE_SNACKBAR":
+      return {
+        ...state,
+        snackbar: {
+          ...state.snackbar,
+          visible: false,
+        },
+      }
     default:
       return state
   }
