@@ -11,62 +11,54 @@ export default function AddItem() {
     price: "",
     image_url: ""
   })
-  const [imageFile, setImageFile] = useState(null)
-
+  const [imageFiles, setImageFiles] = useState([])
   const handleChange = (e) => {
     const { name, value } = e.target
     setFormData({ ...formData, [name]: value })
   }
 
   const handleImageChange = (e) => {
-    setImageFile(e.target.files[0])
+    setImageFiles(Array.from(e.target.files)) // convert FileList to array
   }
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-
-    let uploadedImageUrl = ""
-
-    // Step 1: Upload image if selected
-    if (imageFile) {
-      const imageData = new FormData()
-      imageData.append("image", imageFile)
-
-      try {
-        const res = await axios.post(
-          `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/upload`,
-          imageData,
-          {
-            headers: {
-              "Content-Type": "multipart/form-data",
-            },
-            withCredentials: true,
-          }
-        );
-        const data = res.data
-        if (data.success) {
-          uploadedImageUrl = data.imageUrl
-          showSnackbar(res.data.message, "success"); // ✅ this is the correct use
-        } else {
-          showSnackbar(res.data.message, "error");
-          return
-        }
-      } catch (err) {
-        console.error("Image upload error:", err)
-        showSnackbar("Image upload failed. Please try again.", "error");
-        return
-      }
-    }
-
-    // Step 2: Submit product with image URL
-    const productPayload = {
-      ...formData,
-      image_url: uploadedImageUrl,
-    }
-
-    console.log("Submitting product:", productPayload)
+    e.preventDefault();
 
     try {
+      let uploadedImageUrls = [];
+
+      // 1. Upload all selected images first
+      if (imageFiles && imageFiles.length > 0) {
+        for (let file of imageFiles) {
+          const imageData = new FormData();
+          imageData.append("image", file);
+
+          const res = await axios.post(
+            `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/upload`,
+            imageData,
+            {
+              headers: {
+                "Content-Type": "multipart/form-data",
+              },
+              withCredentials: true,
+            }
+          );
+
+          const data = res.data;
+          if (data.success) {
+            uploadedImageUrls.push(data.imageUrl);
+          } else {
+            throw new Error(data.message || "Image upload failed");
+          }
+        }
+      }
+
+      // 2. Submit product with uploaded image URLs
+      const productPayload = {
+        ...formData,
+        image_urls: uploadedImageUrls, // plural if backend expects multiple images
+      };
+
       const res = await axios.post(
         `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/products/insert-products`,
         productPayload,
@@ -74,29 +66,31 @@ export default function AddItem() {
           headers: {
             "Content-Type": "application/json",
           },
-          withCredentials: true, // if your backend uses sessions/cookies
+          withCredentials: true,
         }
       );
 
       if (res.data.success) {
-        showSnackbar(res.data.message, "success")
+        showSnackbar(res.data.message || "Product saved successfully", "success");
       } else {
-        showSnackbar(res.data.message, "error")
+        throw new Error(res.data.message || "Product insertion failed");
       }
-    } catch (err) {
-      console.error("Error saving product:", err);
-      showSnackbar("An error occurred while saving the product.", "error")
-    }
 
-    // Reset form (optional)
-    setFormData({
-      product_name: "",
-      product_description: "",
-      price: "",
-      image_url: ""
-    })
-    setImageFile(null)
-  }
+      // Reset form
+      setFormData({
+        product_name: "",
+        product_description: "",
+        price: "",
+        image_url: "",
+      });
+      setImageFiles(null);
+
+    } catch (err) {
+      console.error("Error during product creation:", err);
+      showSnackbar(err.message || "Failed to save product.", "error");
+    }
+  };
+
 
   return (
     <Grid>
@@ -140,6 +134,7 @@ export default function AddItem() {
           <input
             type="file"
             accept="image/*"
+            multiple
             onChange={handleImageChange}
           />
         </label>

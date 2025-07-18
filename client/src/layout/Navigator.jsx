@@ -25,6 +25,7 @@ const Navigator = () => {
       { name: "update item", path: "/update-item" },
       { name: "transaction logs", path: "/transaction-logs" },
       { name: "admin logs", path: "/admin-logs" },
+      { name: "manage discount", path: "/manage-discount" },
     ];
   } else {
     // Customer or Guest

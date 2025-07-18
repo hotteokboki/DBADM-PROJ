@@ -1,4 +1,4 @@
-const { insertProductQuery } = require("../models/productModel");
+const { insertProductQuery, getProductsWithoutDiscount } = require("../models/productModel");
 
 const insertProduct = async (req, res) => {
   try {
@@ -22,4 +22,22 @@ const insertProduct = async (req, res) => {
   }
 };
 
-module.exports = { insertProduct };
+const fetchProductsWithoutDiscount = async (req, res) => {
+  try {
+    const result = await getProductsWithoutDiscount();
+
+    res.status(200).json({
+      success: true,
+      products: result.products,
+    });
+  } catch (error) {
+    console.error("Error fetching products without discount:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch products without discount",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { insertProduct, fetchProductsWithoutDiscount };

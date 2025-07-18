@@ -15,6 +15,7 @@ const Sidebar = ({ isShowing }) => {
         { name: "Update Item", path: "/update-item" },
         { name: "Transaction Logs", path: "/transaction-logs" },
         { name: "Admin Logs", path: "/admin-logs" },
+        { name: "Manage Discount", path: "/manage-discount" },
       ]
     : [
         { name: "Home", path: "/" },

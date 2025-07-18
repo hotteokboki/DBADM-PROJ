@@ -7,7 +7,8 @@ const path = require('path');
 const userRoutes = require("./routes/userRoutes.js"); 
 const authRoutes = require("./routes/authRoutes.js");
 const uploadRoutes = require("./routes/uploadRoutes.js"); 
-const productRoutes = require("./routes/productsRoutes.js")
+const productRoutes = require("./routes/productRoutes.js")
+const discountsRoutes = require("./routes/discountsRoutes.js")
 
 require("dotenv").config();
 
@@ -41,6 +42,7 @@ app.use("/api/users", userRoutes);
 app.use("/api/upload", uploadRoutes); 
 app.use("/auth", authRoutes);
 app.use("/api/products", productRoutes);
+app.use("/api/discounts", discountsRoutes);
 
 app.get("/", (req, res) => {
   res.send("Welcome to DBADM Proj!");

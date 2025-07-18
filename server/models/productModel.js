@@ -1,31 +1,49 @@
 const mySQL = require("../config/database.js");
 
 exports.insertProductQuery = async (productData) => {
-  const connection = await mySQL.getConnection(); // Acquire connection
+  const connection = await mySQL.getConnection();
 
   try {
-    await connection.beginTransaction(); // Start transaction
+    await connection.beginTransaction();
 
-    const query = `
+    const productQuery = `
       INSERT INTO product 
       (product_name, product_description, price, stock_quantity, image_url) 
       VALUES (?, ?, ?, ?, ?)
     `;
 
-    const [result] = await connection.query(query, [
+    const [productResult] = await connection.query(productQuery, [
       productData.product_name,
       productData.product_description,
       productData.price,
       productData.stock_quantity || 0,
-      productData.image_url || null,
+      JSON.stringify(productData.image_urls || []), // Store array as JSON
     ]);
 
-    await connection.commit(); // Commit transaction
-    return { success: true, product_id: result.insertId };
+    await connection.commit();
+    return { success: true, product_id: productResult.insertId };
   } catch (err) {
-    await connection.rollback(); // Rollback on error
-    throw err; // Let the controller handle the error
+    await connection.rollback();
+    throw err;
   } finally {
-    connection.release(); // Always release the connection
+    connection.release();
+  }
+};
+
+exports.getProductsWithoutDiscount = async () => {
+  const connection = await mySQL.getConnection();
+
+  try {
+    const query = `
+      SELECT * FROM product 
+      WHERE is_onSale = 0
+    `;
+
+    const [rows] = await connection.query(query);
+    return { success: true, products: rows };
+  } catch (err) {
+    throw err;
+  } finally {
+    connection.release();
   }
 };

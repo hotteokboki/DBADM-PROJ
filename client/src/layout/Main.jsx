@@ -11,6 +11,7 @@ import AdminLogs from "./AdminLogs.jsx"
 import TransactionLogs from "./TransactionLogs.jsx"
 import UpdateItem from "./UpdateItem.jsx"
 import AddItem from "./AddItem.jsx"
+import ManageDiscount from "./ManageDiscounts.jsx"
 
 const Main = () => {
   return (
@@ -23,6 +24,7 @@ const Main = () => {
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
         <Route path="/add-item" element={<AddItem />} />
+        <Route path="/manage-discount" element={<ManageDiscount />} />
         <Route path="/update-item" element={<UpdateItem />} />
         <Route path="/transaction-logs" element={<TransactionLogs />} />
         <Route path="/admin-logs" element={<AdminLogs />} />
