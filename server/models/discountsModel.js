@@ -5,13 +5,39 @@ exports.getAllDiscounts = async () => {
 
   try {
     const query = `
-      SELECT * FROM discounts;
+      SELECT * FROM discounts
+      WHERE is_active = 1;
     `;
 
     const [rows] = await connection.query(query);
     return { success: true, discounts: rows };
   } catch (err) {
     throw err;
+  } finally {
+    connection.release();
+  }
+};
+
+exports.tagProductsWithDiscount = async (product_ids, discount_id) => {
+  const connection = await mySQL.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const insertQuery = `
+      INSERT INTO product_discounts (product_id, discount_id)
+      VALUES (?, ?)
+    `;
+
+    for (const product_id of product_ids) {
+      await connection.query(insertQuery, [product_id, discount_id]);
+    }
+
+    await connection.commit();
+    return { success: true };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
   } finally {
     connection.release();
   }

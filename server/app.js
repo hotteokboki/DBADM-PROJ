@@ -11,6 +11,8 @@ const productRoutes = require("./routes/productRoutes.js")
 const discountsRoutes = require("./routes/discountsRoutes.js")
 
 require("dotenv").config();
+require("./utils/scheduler");
+console.log("🔁 Scheduler loaded");
 
 const app = express();
 
