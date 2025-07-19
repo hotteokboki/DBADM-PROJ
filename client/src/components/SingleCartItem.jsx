@@ -8,26 +8,36 @@ const SingleCartItem = ({
   productName,
   productPrice,
   isOnSale,
-  salePercent,
   amount,
+  discountType,
+  discountValue,
   images,
 }) => {
-  const { removeItem } = useGlobalContext()
+  const { removeItem } = useGlobalContext();
 
-  const actualPrice = isOnSale
-    ? (productPrice * salePercent).toFixed(2)
-    : productPrice.toFixed(2)
+  const validPrice = typeof productPrice === "number" ? productPrice : 0;
 
-  const totalPrice = (actualPrice * amount).toFixed(2)
+  let actualPrice = validPrice;
+  if (isOnSale) {
+    if (discountType === "percentage") {
+      actualPrice = validPrice * (1 - discountValue / 100);
+    } else if (discountType === "fixed") {
+      actualPrice = validPrice - discountValue;
+    }
+  }
+
+  if (typeof actualPrice !== "number" || isNaN(actualPrice)) return null;
+
+  const totalPrice = (actualPrice * amount).toFixed(2);
+  const primaryImage = images?.[0] || { url: "", alt: "Product image" };
 
   return (
     <SingleItemWrapper>
-      <img src={images[0].url} alt={images[0].alt} />
+      <img src={primaryImage.url} alt={primaryImage.alt} />
       <div className="item-info">
         <p className="name">{productName}</p>
         <p className="total">
-          ${actualPrice}
-          &nbsp;x&nbsp;{amount}&nbsp;
+          ${actualPrice.toFixed(2)}&nbsp;x&nbsp;{amount}&nbsp;
           <span>${totalPrice}</span>
         </p>
       </div>
@@ -35,8 +45,8 @@ const SingleCartItem = ({
         <Delete />
       </button>
     </SingleItemWrapper>
-  )
-}
+  );
+};
 
 const SingleItemWrapper = styled.li`
   display: flex;
@@ -73,15 +83,21 @@ SingleCartItem.propTypes = {
   productPrice: PropTypes.number,
   amount: PropTypes.number,
   isOnSale: PropTypes.bool,
+  salePercent: PropTypes.number,
+  discountType: PropTypes.string,
+  discountValue: PropTypes.number,
   images: PropTypes.array,
-}
+};
 
 SingleCartItem.defaultProps = {
   productPrice: 0,
-  amount: 0,
+  amount: 1,
   isOnSale: false,
+  salePercent: 1,
+  discountType: null,
+  discountValue: 0,
   images: [],
-}
+};
 
 // productId: 1,
 // companyName: "Sneaker Company",

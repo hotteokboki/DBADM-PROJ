@@ -1,25 +1,49 @@
-import styled from "styled-components"
-import { Link } from "react-router-dom"
-import { data } from "../utils/data"
+import styled from "styled-components";
+import { Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import axios from "axios";
 
 const ProductList = () => {
+  const [products, setProducts] = useState([]);
+
+  useEffect(() => {
+    axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/products/get-product-list`)
+      .then(response => {
+        if (response.data.success) {
+          setProducts(response.data.products);
+        }
+      })
+      .catch(err => console.error("Error fetching products:", err));
+  }, []);
+
   return (
     <Grid>
       <h1>Shop Now</h1>
-      {data.map((item, index) => (
-        <Card key={index}>
-          <img
-            src={item.thumbnails?.[0]?.url}
-            alt={item.thumbnails?.[0]?.alt || item.productName}
-          />
-          <h2>{item.productName}</h2>
-          <p>${item.productPrice}</p>
-          <Link to={`/product/${index}`}>View Product</Link>
-        </Card>
-      ))}
+      {products.map((item) => {
+        let images = [];
+
+        try {
+          images = Array.isArray(item.image_url)
+            ? item.image_url
+            : JSON.parse(item.image_url || "[]");
+        } catch (e) {
+          console.error("Error parsing image_url:", item.image_url, e);
+        }
+
+        const thumbnail = images[0] || "";
+
+        return (
+          <Card key={item.product_id}>
+            <img src={thumbnail} alt={item.product_name} />
+            <h2>{item.product_name}</h2>
+            <p>${item.price}</p>
+            <Link to={`/product/${item.product_id}`}>View Product</Link>
+          </Card>
+        );
+      })}
     </Grid>
-  )
-}
+  );
+};
 
 const Grid = styled.section`
   max-width: 111rem;

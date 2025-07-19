@@ -9,33 +9,52 @@ const ProductInfo = ({
   productDescription,
   productPrice,
   isOnSale,
-  salePercent,
+  discountType,
+  discountValue,
+  productImages,
 }) => {
   return (
     <InfoWrapper>
       <div className="inner-info">
         <h2 className="company-name">{companyName}</h2>
         <p className="product-name">{productName}</p>
-        <p className="product-description">{productDescription}</p>
+        <p className="product-description">
+          {productDescription.split("\n").map((line, i) => (
+            <span key={i}>
+              {line}
+              <br />
+            </span>
+          ))}
+        </p>
         <div className="pricing">
-          <p className="price">
-            $
-            {isOnSale
-              ? (productPrice * salePercent).toFixed(2)
-              : productPrice.toFixed(2)}
-          </p>
-          {isOnSale && (
-            <p className="percent">{salePercent.toFixed(2) * 100 + "%"}</p>
-          )}
-          {isOnSale && (
-            <p className="original-price">${productPrice.toFixed(2)}</p>
+          <p className="price">${Number(productPrice).toFixed(2)}</p>
+
+          {isOnSale && discountType && discountValue && (
+            <>
+              <p className="percent">
+                {discountType === "percentage"
+                  ? `${Number(discountValue).toFixed(0)}%`
+                  : `$${Number(discountValue).toFixed(2)}`}
+              </p>
+              <p className="original-price">
+                ${Number(productPrice / (1 - discountValue / 100)).toFixed(2)}
+              </p>
+            </>
           )}
         </div>
       </div>
-      <ProductControls productId={productId} />
+      <ProductControls
+        productId={productId}
+        productName={productName}
+        productPrice={productPrice}
+        isOnSale={isOnSale}
+        discountType={discountType}
+        discountValue={discountValue}
+        images={productImages}
+      />
     </InfoWrapper>
-  )
-}
+  );
+};
 
 const InfoWrapper = styled.section`
   padding: 2.4rem;
@@ -63,11 +82,19 @@ const InfoWrapper = styled.section`
       margin-bottom: 1.5rem;
     }
 
+    /* 👇 Use this class with a <ul> */
     .product-description {
       font-size: 1.5rem;
       color: hsl(var(--dark-grayish-blue));
-      line-height: 2.5rem;
+      list-style-type: disc;
+      padding-left: 1.5rem;
+      margin-top: 1rem;
       margin-bottom: 2.4rem;
+      line-height: 2.5rem;
+
+      li {
+        margin-bottom: 0.75rem;
+      }
     }
 
     .pricing {
@@ -132,6 +159,7 @@ const InfoWrapper = styled.section`
       .pricing {
         grid-template-rows: 1fr 1fr;
         gap: 0 1.6rem;
+
         .price {
           grid-column: 1 / 2;
           grid-row: 1;

@@ -19,29 +19,57 @@ const reducer = (state, action) => {
       if (state.userRole === 2) return state // optional: allow hide anyway
       return { ...state, showingCart: false }
     case "INCREASE_AMOUNT":
-      const increasedAmount = state.amount + 1
-      return { ...state, amount: increasedAmount }
+      return {
+        ...state,
+        amounts: {
+          ...state.amounts,
+          [action.payload]: (state.amounts[action.payload] || 1) + 1,
+        },
+      }
+
     case "DECREASE_AMOUNT":
-      const decreasedAmount = () => {
-        if (state.amount <= 0) return 0
-        return state.amount - 1
+      return {
+        ...state,
+        amounts: {
+          ...state.amounts,
+          [action.payload]: Math.max((state.amounts[action.payload] || 1) - 1, 1),
+        },
       }
-      return { ...state, amount: decreasedAmount() }
     case "ADD_TO_CART":
-      if (state.userRole === 2) return state // admin cannot add to cart
-      const { item, amount } = action.payload
-      const hasItem = state.cart.find((product) => {
-        return product.productId === item.productId
-      })
-      if (hasItem) {
-        const updatedItem = { ...hasItem, amount }
-        return { ...state, amount: 0, cart: [updatedItem] }
+      if (state.userRole === 2) return state; // admin cannot add to cart
+
+      const { item, amount } = action.payload;
+      const existingItemIndex = state.cart.findIndex(
+        (product) => product.productId === item.productId
+      );
+
+      // Remove product's amount entry from state.amounts
+      const updatedAmounts = { ...state.amounts };
+      delete updatedAmounts[item.productId];
+
+      if (existingItemIndex !== -1) {
+        // Update existing item quantity
+        const updatedCart = [...state.cart];
+        const existingItem = updatedCart[existingItemIndex];
+        updatedCart[existingItemIndex] = {
+          ...existingItem,
+          amount: existingItem.amount + amount,
+        };
+        return { ...state, cart: updatedCart, amounts: updatedAmounts };
       } else {
-        const newItem = { ...item, amount }
-        return { ...state, amount: 0, cart: [...state.cart, newItem] }
+        // Add new item
+        const newItem = { ...item, amount };
+        return { ...state, cart: [...state.cart, newItem], amounts: updatedAmounts };
       }
+
     case "UPDATE_CART":
       return { ...state }
+    case "LOAD_CART_FROM_DB":
+      return {
+        ...state,
+        cart: action.payload.cart,
+        amounts: action.payload.amounts,
+      }
     case "REMOVE_ITEM":
       // const { id: itemId } = action.payload
       // const newCart = state.cart.filter((product) => {

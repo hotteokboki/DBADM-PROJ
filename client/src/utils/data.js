@@ -3,7 +3,7 @@ import { productImages } from "../assets/imagedata"
 export const data = [
   {
     productId: 1,
-    companyName: "Sneaker Company",
+    companyName: "Florecien Technologies Inc",
     productName: "Fall Limited Edition Sneakers",
     productDescription:
       "These low-profile sneakers are your perfect casual wear companion. Featuring a durable rubber outer sole, they’ll withstand everything the weather can offer.",
@@ -16,7 +16,7 @@ export const data = [
   },
   {
     productId: 2,
-    companyName: "Sneaker Company",
+    companyName: "Florecien Technologies Inc",
     productName: "Spring Limited Edition Sneakers",
     productDescription:
       "These high-performance sneakers are designed to deliver exceptional comfort for your daily stride.",

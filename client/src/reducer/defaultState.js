@@ -1,6 +1,6 @@
 export const defaultState = {
   cart: [],
-  amount: 0,
+  amounts: {},
   totalCost: 0,
   totalCartSize: 0,
   showSidebar: false,

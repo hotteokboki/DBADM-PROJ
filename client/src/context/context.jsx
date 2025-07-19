@@ -32,7 +32,7 @@ const AppProvider = ({ children }) => {
         });
         if (response.data.success) {
           const role = response.data.user.role;
-          console.log("SET USER ROLE VAL: ",role);
+          console.log("SET USER ROLE VAL: ", role);
           dispatch({ type: "SET_USER_ROLE", payload: role });
         }
       } catch (err) {
@@ -42,6 +42,31 @@ const AppProvider = ({ children }) => {
 
     fetchUser();
   }, []);
+
+  useEffect(() => {
+    const fetchCart = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/cart/get-cart-items`, {
+          withCredentials: true
+        });
+        if (res.data.success) {
+          dispatch({
+            type: "LOAD_CART_FROM_DB",
+            payload: {
+              cart: res.data.cartItems, // from DB
+              amounts: {}, // optional
+            },
+          });
+        }
+        console.log("Cart Items: ", res.data);
+      } catch (err) {
+        console.error("Failed to load cart from DB", err);
+      }
+    };
+
+    fetchCart();
+  }, []);
+
 
   const showSidebar = () => {
     dispatch({ type: SHOW_SIDEBAR })
@@ -68,12 +93,12 @@ const AppProvider = ({ children }) => {
   }
 
   const increaseAmount = (id) => {
-    dispatch({ type: INCREASE_AMOUNT, payload: { id } })
-  }
+    dispatch({ type: "INCREASE_AMOUNT", payload: id });
+  };
 
   const decreaseAmount = (id) => {
-    dispatch({ type: DECREASE_AMOUNT, payload: { id } })
-  }
+    dispatch({ type: "DECREASE_AMOUNT", payload: id });
+  };
 
   const addToCart = (amount, item) => {
     if (!amount) return

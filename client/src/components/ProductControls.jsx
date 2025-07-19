@@ -3,42 +3,79 @@ import PropTypes from "prop-types"
 import { Plus, Minus, Cart } from "../icons/index"
 import Button from "./Button"
 import { useGlobalContext } from "../context/context"
-import { data } from "../utils/data"
-const ProductControls = ({ productId }) => {
-  const { increaseAmount, decreaseAmount, removeItem, addToCart, state } =
-    useGlobalContext()
+import axios from "axios";
+
+const ProductControls = ({
+  productId,
+  productName,
+  productPrice,
+  isOnSale,
+  discountType,
+  discountValue,
+  images
+}) => {
+  const { increaseAmount, decreaseAmount, addToCart, state } = useGlobalContext()
+
+  const handleAddToCart = async () => {
+    const amount = state.amounts?.[productId] || 1;
+
+    const item = {
+      productId,
+      productName,
+      productPrice,
+      isOnSale,
+      discountType,
+      discountValue,
+      images,
+    };
+
+    addToCart(amount, item);
+
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/cart/add-to-cart`,
+        {
+          productId,
+          quantity: amount,
+          priceAtAddition: productPrice,
+        },
+        {
+          withCredentials: true, // important to send session cookie
+        }
+      );
+
+      if (!response.data.success) {
+        throw new Error("Add to cart failed");
+      }
+    } catch (error) {
+      console.error("Cart save error:", error);
+    }
+  };
+
+
 
   return (
     <ControlsWrapper>
       <div className="inner-controls">
-        <button
-          onClick={() => {
-            decreaseAmount(productId)
-          }}
-        >
+        <button onClick={() => decreaseAmount(productId)}>
           <Minus />
         </button>
-        <span className="amount">{state.amount}</span>
-        <button
-          onClick={() => {
-            increaseAmount(productId)
-          }}
-        >
+        <span className="amount">{state.amounts?.[productId] || 1}</span>
+        <button onClick={() => increaseAmount(productId)}>
           <Plus />
         </button>
       </div>
-      <Button
-        className="cart"
-        func={() => {
-          addToCart(state.amount, data)
-        }}
-        color={"#FFFFFF"}
-      >
+      <Button className="cart" func={handleAddToCart} color="#FFFFFF">
         <Cart />
         Add to Cart
       </Button>
     </ControlsWrapper>
   )
+}
+
+ProductControls.propTypes = {
+  productId: PropTypes.oneOfType([PropTypes.string, PropTypes.number]).isRequired,
+  productPrice: PropTypes.number.isRequired,
 }
 
 const ControlsWrapper = styled.div`
@@ -66,8 +103,9 @@ const ControlsWrapper = styled.div`
 
     .inner-controls {
       margin-bottom: 0;
-      grid-column: 1 /3;
+      grid-column: 1 / 3;
     }
+
     .cart {
       grid-column: 3 / 6;
     }

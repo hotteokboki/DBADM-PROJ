@@ -13,7 +13,7 @@ const FloatingCart = ({ className }) => {
       <ul className="cart-items">
         {state.cart.length > 0 ? (
           state.cart.map((cartItem) => {
-            return <SingleCartItem key={cartItem.productId} {...cartItem} />
+            return <SingleCartItem key={cartItem.product_id} {...cartItem} />
           })
         ) : (
           <p className="empty">Your cart is empty.</p>
