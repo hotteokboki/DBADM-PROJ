@@ -107,3 +107,43 @@ exports.getCartItems = async (userId) => {
     connection.release();
   }
 };
+
+exports.removeCartItem = async (userId, productId) => {
+  const connection = await mySQL.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // 1. Get cart_id for this user
+    const [cartRows] = await connection.query(
+      "SELECT cart_id FROM cart WHERE user_id = ?",
+      [userId]
+    );
+
+    if (cartRows.length === 0) {
+      await connection.rollback(); // nothing to remove
+      throw new Error("Cart not found");
+    }
+
+    const cartId = cartRows[0].cart_id;
+
+    // 2. Remove the product from cart_items
+    const [deleteResult] = await connection.query(
+      "DELETE FROM cart_items WHERE cart_id = ? AND product_id = ?",
+      [cartId, productId]
+    );
+
+    if (deleteResult.affectedRows === 0) {
+      await connection.rollback(); // no item was deleted
+      throw new Error("Product not found in cart");
+    }
+
+    await connection.commit();
+    return { success: true, message: "Item removed from cart" };
+  } catch (error) {
+    await connection.rollback();
+    throw error;
+  } finally {
+    connection.release();
+  }
+};

@@ -12,14 +12,14 @@ const FloatingCart = ({ className }) => {
       <div className="divider"></div>
       <ul className="cart-items">
         {state.cart.length > 0 ? (
-          state.cart.map((cartItem) => {
-            return <SingleCartItem key={cartItem.product_id} {...cartItem} />
-          })
+          state.cart.map((cartItem) => (
+            <SingleCartItem key={cartItem.productId} {...cartItem} />
+          ))
         ) : (
           <p className="empty">Your cart is empty.</p>
         )}
-        {state.cart.length > 0 && <Button>Checkout</Button>}
       </ul>
+      {state.cart.length > 0 && <Button>Checkout</Button>}
     </FloatingCartWrapper>
   )
 }

@@ -1,4 +1,4 @@
-const { addToCart, getCartItems } = require("../models/cartModel");
+const { addToCart, getCartItems, removeCartItem } = require("../models/cartModel");
 
 const addToCartController = async (req, res) => {
   const { productId, quantity, priceAtAddition } = req.body;
@@ -47,4 +47,31 @@ const fetchCartItems = async (req, res) => {
   }
 };
 
-module.exports = { addToCartController, fetchCartItems };
+const removeItemFromCart = async (req, res) => {
+  const userId = req.session?.user?.id;
+  const { productId } = req.body;
+
+  if (!userId || !productId) {
+    return res.status(400).json({
+      success: false,
+      message: "Missing user or product ID",
+    });
+  }
+
+  try {
+    const result = await removeCartItem(userId, productId);
+    return res.status(200).json({
+      success: true,
+      message: result.message,
+    });
+  } catch (error) {
+    console.error("Cart remove error:", error.message);
+    return res.status(500).json({
+      success: false,
+      message: "Failed to remove item from cart",
+      error: error.message,
+    });
+  }
+};
+
+module.exports = { addToCartController, fetchCartItems, removeItemFromCart };

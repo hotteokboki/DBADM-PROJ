@@ -70,12 +70,11 @@ const reducer = (state, action) => {
         cart: action.payload.cart,
         amounts: action.payload.amounts,
       }
-    case "REMOVE_ITEM":
-      // const { id: itemId } = action.payload
-      // const newCart = state.cart.filter((product) => {
-      //   return product.productId !== itemId
-      // })
-      return { ...state, cart: [] }
+    case "REMOVE_ITEM": {
+      const { id: itemId } = action.payload;
+      const newCart = state.cart.filter((product) => product.productId !== itemId);
+      return { ...state, cart: newCart };
+    }
     case "GET_TOTAL_CART":
       const totalCartCount = state.cart.reduce((total, currentItem) => {
         return total + currentItem.amount

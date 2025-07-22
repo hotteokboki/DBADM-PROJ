@@ -14,7 +14,7 @@ const ProductControls = ({
   discountValue,
   images
 }) => {
-  const { increaseAmount, decreaseAmount, addToCart, state } = useGlobalContext()
+  const { increaseAmount, decreaseAmount, addToCart, state, showSnackbar } = useGlobalContext()
 
   const handleAddToCart = async () => {
     const amount = state.amounts?.[productId] || 1;
@@ -46,6 +46,8 @@ const ProductControls = ({
 
       if (!response.data.success) {
         throw new Error("Add to cart failed");
+      } else {
+        showSnackbar("Item added to cart!", "success");
       }
     } catch (error) {
       console.error("Cart save error:", error);

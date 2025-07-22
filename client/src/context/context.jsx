@@ -49,16 +49,30 @@ const AppProvider = ({ children }) => {
         const res = await axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/cart/get-cart-items`, {
           withCredentials: true
         });
+
         if (res.data.success) {
+          // Normalize the cart structure here
+          const normalizedCart = res.data.cartItems.map(item => ({
+            productId: item.product_id,
+            productName: item.product_name,
+            productPrice: parseFloat(item.price),
+            amount: item.amount,
+            isOnSale: !!item.is_onSale,
+            discountType: item.discount_type || null,
+            discountValue: item.discount_value || null,
+            images: Array.isArray(item.images) ? item.images : [{ url: item.images, alt: item.product_name }],
+          }));
+
           dispatch({
             type: "LOAD_CART_FROM_DB",
             payload: {
-              cart: res.data.cartItems, // from DB
+              cart: normalizedCart,
               amounts: {}, // optional
             },
           });
         }
-        console.log("Cart Items: ", res.data);
+
+        console.log("Normalized Cart Items: ", res.data);
       } catch (err) {
         console.error("Failed to load cart from DB", err);
       }
@@ -67,6 +81,24 @@ const AppProvider = ({ children }) => {
     fetchCart();
   }, []);
 
+  const removeItem = async (id) => {
+    // Optimistically update UI
+    dispatch({ type: REMOVE_ITEM, payload: { id } });
+
+    try {
+      await axios.post(
+        `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/cart/remove-item`,
+        { productId: id },
+        { withCredentials: true }
+      );
+      // Optionally show a snackbar
+      showSnackbar("Item removed from cart", "success");
+    } catch (err) {
+      console.error("Failed to remove item from backend", err);
+      showSnackbar("Failed to remove item. Try again.", "error");
+      // Optional: re-fetch cart if needed
+    }
+  };
 
   const showSidebar = () => {
     dispatch({ type: SHOW_SIDEBAR })
@@ -117,10 +149,6 @@ const AppProvider = ({ children }) => {
 
   const getTotalCartAmount = () => {
     dispatch({ type: GET_TOTAL_CART })
-  }
-
-  const removeItem = (id) => {
-    dispatch({ type: REMOVE_ITEM, payload: { id } })
   }
 
   const readScreenWidth = () => {
