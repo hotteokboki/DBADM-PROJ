@@ -7,22 +7,33 @@ const Sidebar = ({ isShowing }) => {
   const { hideSidebar, state } = useGlobalContext()
   const role = state.userRole;
 
-  console.log("Sidebar User Role:", role);
+  let sideBarLinks = [];
 
-  const sideBarLinks = role === 2
-    ? [
-        { name: "Add Item", path: "/add-item" },
-        { name: "Update Item", path: "/update-item" },
-        { name: "Transaction Logs", path: "/transaction-logs" },
-        { name: "Admin Logs", path: "/admin-logs" },
-        { name: "Manage Discount", path: "/manage-discount" },
-      ]
-    : [
-        { name: "Home", path: "/" },
-        { name: "Shop", path: "/shop" },
-        { name: "Collections", path: "/collections" },
-        { name: "About", path: "/about" },
-      ];
+  if (role === 2) {
+    //  Admin
+    sideBarLinks = [
+      { name: "Add Item", path: "/add-item" },
+      { name: "Update Item", path: "/update-item" },
+      { name: "Transaction Logs", path: "/transaction-logs" },
+      { name: "Admin Logs", path: "/admin-logs" },
+      { name: "Manage Discount", path: "/manage-discount" },
+    ];
+  } else if (role === 3) {
+    // Staff
+    sideBarLinks = [
+      { name: "Add Item", path: "/add-item" },
+      { name: "Update Item", path: "/update-item" },
+      { name: "Manage Discount", path: "/manage-discount" },
+    ];
+  } else {
+    // Customer
+    sideBarLinks = [
+      { name: "Home", path: "/" },
+      { name: "Shop", path: "/shop" },
+      { name: "Collections", path: "/collections" },
+      { name: "About", path: "/about" },
+    ];
+  }
 
   return (
     <SidebarWrapper className={isShowing && "active"}>

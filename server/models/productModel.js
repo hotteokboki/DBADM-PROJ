@@ -48,6 +48,58 @@ exports.getProductsWithoutDiscount = async () => {
   }
 };
 
+exports.fetchAllProducts = async () => {
+  const connection = await mySQL.getConnection();
+
+  try {
+    const query = `
+      SELECT * FROM product
+      WHERE is_active = 1
+    `;
+
+    const [rows] = await connection.query(query);
+    return { success: true, products: rows };
+  } catch (err) {
+    throw err;
+  } finally {
+    connection.release();
+  }
+};
+
+exports.setProductInactive = async (productId) => {
+  const connection = await mySQL.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    const updateQuery = `
+      UPDATE product 
+      SET is_active = 0, updated_at = CURRENT_TIMESTAMP 
+      WHERE product_id = ?
+    `
+    const [updateResult] = await connection.query(updateQuery, [productId]);
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error("Product not found");
+    }
+
+    // Fetch updated product
+    const [rows] = await connection.query(
+      "SELECT * FROM product WHERE product_id = ?",
+      [productId]
+    );
+
+    await connection.commit();
+    return rows[0];
+  } catch (err) {
+    await connection.rollback();
+    console.error("Transaction failed:", err.message);
+    throw err;
+  } finally {
+    connection.release();
+  }
+}
+
 exports.getProductInformation = async (product_id) => {
   const connection = await mySQL.getConnection();
 
@@ -85,6 +137,7 @@ exports.getProductList = async (product_id) => {
     const query = `
       SELECT product_id, image_url, price, product_name
       FROM product
+      WHERE is_active = 1
     `;
 
     const [rows] = await connection.query(query);
