@@ -100,6 +100,55 @@ exports.setProductInactive = async (productId) => {
   }
 }
 
+exports.updateProduct = async (productId, fields) => {
+  const connection = await mySQL.getConnection();
+
+  try {
+    await connection.beginTransaction();
+
+    // Prepare update statement
+    const updateQuery = `
+      UPDATE product
+      SET 
+        product_name = ?, 
+        product_description = ?, 
+        price = ?, 
+        stock_quantity = ?, 
+        updated_at = CURRENT_TIMESTAMP
+      WHERE product_id = ?
+    `;
+
+    const updateValues = [
+      fields.product_name,
+      fields.product_description,
+      fields.price,
+      fields.stock_quantity,
+      productId
+    ];
+
+    const [updateResult] = await connection.query(updateQuery, updateValues);
+
+    if (updateResult.affectedRows === 0) {
+      throw new Error("Product not found");
+    }
+
+    // Fetch updated product
+    const [rows] = await connection.query(
+      "SELECT * FROM product WHERE product_id = ?",
+      [productId]
+    );
+
+    await connection.commit();
+    return rows[0];
+  } catch (err) {
+    await connection.rollback();
+    console.error("Error updating product:", err.message);
+    throw err;
+  } finally {
+    connection.release();
+  }
+};
+
 exports.getProductInformation = async (product_id) => {
   const connection = await mySQL.getConnection();
 

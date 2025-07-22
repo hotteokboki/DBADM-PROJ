@@ -9,9 +9,9 @@ export default function UpdateItem() {
   const [editingProduct, setEditingProduct] = useState(null)
   const [formData, setFormData] = useState({
     product_name: "",
-    description: "",
+    product_description: "",
     price: "",
-    stock: "",
+    stock_quantity: "",
   })
 
   useEffect(() => {
@@ -36,9 +36,9 @@ export default function UpdateItem() {
     setEditingProduct(product.product_id)
     setFormData({
       product_name: product.product_name,
-      description: product.description,
+      product_description: product.product_description,
       price: product.price,
-      stock: product.stock,
+      stock_quantity: product.stock_quantity,
     })
   }
 
@@ -56,7 +56,7 @@ export default function UpdateItem() {
       if (res.data.success) {
         showSnackbar("Product updated successfully!", "success")
         setEditingProduct(null)
-        setFormData({ product_name: "", description: "", price: "", stock: "" })
+        setFormData({ product_name: "", product_description: "", price: "", stock_quantity: "" })
         fetchProducts()
       } else {
         throw new Error(res.data.message)
@@ -105,10 +105,12 @@ export default function UpdateItem() {
           <label>
             Description
             <textarea
-              name="description"
-              value={formData.description}
+              name="product_description"
+              value={formData.product_description}
               onChange={handleChange}
               required
+              rows={6}
+              style={{ resize: "vertical", minHeight: "120px" }}
             />
           </label>
           <label>
@@ -125,13 +127,22 @@ export default function UpdateItem() {
             Stock
             <input
               type="number"
-              name="stock"
-              value={formData.stock}
+              name="stock_quantity"
+              value={formData.stock_quantity}
               onChange={handleChange}
               required
             />
           </label>
           <button type="submit">Update Product</button>
+          <button
+            type="button"
+            onClick={() => {
+              setEditingProduct(null)
+              setFormData({ product_name: "", product_description: "", price: "", stock_quantity: "" })
+            }}
+          >
+            Cancel
+          </button>
         </Form>
       )}
 
@@ -139,9 +150,9 @@ export default function UpdateItem() {
         {productList.map((product) => (
           <div key={product.product_id} className="product">
             <h3>{product.product_name}</h3>
-            <p>{product.description}</p>
+            <p style={{ whiteSpace: "pre-line" }}>{product.product_description}</p>
             <p>Price: ₱{product.price}</p>
-            <p>Stock: {product.stock}</p>
+            <p>Stock: {product.stock_quantity}</p>
             <div className="actions">
               <button onClick={() => handleEditClick(product)}>Edit</button>
               <button onClick={() => handleDelete(product.product_id)}>Delete</button>
