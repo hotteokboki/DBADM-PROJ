@@ -3,10 +3,10 @@ const { insertProductQuery, getProductsWithoutDiscount, getProductList, getProdu
 const insertProduct = async (req, res) => {
   try {
     const productData = req.body;
-
+    const userId = req.session?.user?.id;
     console.log("Checking product data: ", productData)
 
-    await insertProductQuery(productData);
+    await insertProductQuery(productData, userId);
 
     res.status(201).json({
       success: true,
@@ -24,10 +24,11 @@ const insertProduct = async (req, res) => {
 
 const setProductInactiveController = async (req, res) => {
   const { productId } = req.params;
-
+  const userId = req.session?.user?.id;
+  console.log("controller userId: ", userId);
   try {
-    const updatedProduct = await setProductInactive(productId);
-
+    const updatedProduct = await setProductInactive(productId, userId);
+    
     res.status(200).json({
       success: true,
       message: "Product set to inactive successfully",

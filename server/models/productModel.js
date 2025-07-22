@@ -1,6 +1,6 @@
 const mySQL = require("../config/database.js");
 
-exports.insertProductQuery = async (productData) => {
+exports.insertProductQuery = async (productData, userId) => {
   const connection = await mySQL.getConnection();
 
   try {
@@ -66,7 +66,7 @@ exports.fetchAllProducts = async () => {
   }
 };
 
-exports.setProductInactive = async (productId) => {
+exports.setProductInactive = async (productId, userId) => {
   const connection = await mySQL.getConnection();
 
   try {
@@ -83,6 +83,38 @@ exports.setProductInactive = async (productId) => {
       throw new Error("Product not found");
     }
 
+    const [productRows] = await connection.query(
+      `SELECT product_name, product_description, price, image_url, is_active 
+      FROM product 
+      WHERE product_id = ?`,
+      [productId]
+    );
+
+    const product = productRows[0];
+    console.log("Product to log:", product);
+    const logQuery = `
+      INSERT INTO product_logs (
+        product_id, user_id, product_name, product_description,
+        price, image_url, is_active, action_type
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await connection.query(logQuery, [
+      productId,      
+      userId,             
+      product.product_name,
+      product.product_description,
+      product.price,
+      JSON.stringify([product.image_url]),
+      product.is_active,
+      'UPDATE'
+    ]);
+
+
+    const logResult = await connection.query(logQuery, [productId, userId]);
+    if (logResult.affectedRows === 0) {
+      throw new Error("Failed to log product inactivity");
+    }
     // Fetch updated product
     const [rows] = await connection.query(
       "SELECT * FROM product WHERE product_id = ?",
