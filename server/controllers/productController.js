@@ -1,4 +1,4 @@
-const { insertProductQuery, getProductsWithoutDiscount, getProductList, getProductInformation, fetchAllProducts, setProductInactive } = require("../models/productModel");
+const { insertProductQuery, getProductsWithoutDiscount, getProductList, getProductInformation, fetchAllProducts, setProductInactive, updateProduct } = require("../models/productModel");
 
 const insertProduct = async (req, res) => {
   try {
@@ -38,6 +38,28 @@ const setProductInactiveController = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to set product to inactive",
+      error: error.message,
+    });
+  }
+};
+
+const updateProductInformation = async (req, res) => {
+  const { productId } = req.params;
+  const fields = req.body
+
+  try {
+    const updatedProduct = await updateProduct(productId, fields);
+
+    res.status(200).json({
+      success: true,
+      message: "Product edited successfully",
+      data: updatedProduct,
+    });
+  } catch (error) {
+    console.error("Error editing product:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to edit product",
       error: error.message,
     });
   }
@@ -117,4 +139,4 @@ const fetchProductInformation = async (req, res) => {
   }
 };
 
-module.exports = { insertProduct, fetchProductsWithoutDiscount, fetchProductList, fetchProductInformation, getAllProducts, setProductInactiveController };
+module.exports = { insertProduct, fetchProductsWithoutDiscount, fetchProductList, fetchProductInformation, getAllProducts, setProductInactiveController, updateProductInformation };

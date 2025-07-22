@@ -11,8 +11,10 @@ const ProductInfo = ({
   isOnSale,
   discountType,
   discountValue,
+  daysLeft,
   productImages,
 }) => {
+
   return (
     <InfoWrapper>
       <div className="inner-info">
@@ -34,11 +36,20 @@ const ProductInfo = ({
               <p className="percent">
                 {discountType === "percentage"
                   ? `${Number(discountValue).toFixed(0)}%`
-                  : `$${Number(discountValue).toFixed(2)}`}
+                  : `-$${Number(discountValue).toFixed(2)}`}
               </p>
+
               <p className="original-price">
-                ${Number(productPrice / (1 - discountValue / 100)).toFixed(2)}
+                ${discountType === "percentage"
+                  ? (productPrice / (1 - discountValue / 100)).toFixed(2)
+                  : (productPrice + Number(discountValue)).toFixed(2)}
               </p>
+
+              {daysLeft > 0 && (
+                <p className="sale-ends">
+                  Sale ends in {daysLeft} day{daysLeft > 1 ? "s" : ""}
+                </p>
+              )}
             </>
           )}
         </div>
@@ -99,34 +110,45 @@ const InfoWrapper = styled.section`
 
     .pricing {
       display: grid;
+      grid-template-columns: auto auto 1fr;
+      grid-template-rows: auto auto;
+      gap: 0.8rem 1.6rem;
       align-items: center;
-      grid-template-columns: repeat(4, 1fr);
-      grid-template-rows: 1fr;
-      gap: 1.6rem;
 
       .price {
         font-size: 2.8rem;
         font-weight: 700;
         grid-column: 1 / 2;
+        grid-row: 1 / 2;
       }
 
       .percent {
-        color: hsl(var(--orange));
-        background-color: hsl(var(--pale-orange));
         font-size: 1.6rem;
         font-weight: 700;
-        padding: 0.7rem 0.8rem;
+        color: hsl(var(--orange));
+        background-color: hsl(var(--pale-orange));
+        padding: 0.6rem 1rem;
         border-radius: 0.6rem;
         grid-column: 2 / 3;
-        text-align: center;
+        grid-row: 1 / 2;
       }
 
       .original-price {
-        text-decoration: line-through;
         font-size: 1.6rem;
         font-weight: 700;
         color: hsl(var(--grayish-blue));
-        grid-column: 4 / 5;
+        text-decoration: line-through;
+        justify-self: end;
+        grid-column: 3 / 4;
+        grid-row: 1 / 2;
+      }
+
+      .sale-ends {
+        font-size: 1.4rem;
+        font-weight: 500;
+        color: hsl(var(--dark-grayish-blue));
+        grid-column: 1 / 4;
+        grid-row: 2 / 3;
       }
     }
   }
@@ -157,21 +179,31 @@ const InfoWrapper = styled.section`
       }
 
       .pricing {
-        grid-template-rows: 1fr 1fr;
-        gap: 0 1.6rem;
+        display: grid;
+        grid-template-columns: auto auto 1fr;
+        grid-template-rows: auto auto;
+        gap: 0.8rem 1.6rem;
 
         .price {
           grid-column: 1 / 2;
-          grid-row: 1;
+          grid-row: 1 / 2;
         }
 
         .percent {
-          justify-self: start;
+          grid-column: 2 / 3;
+          grid-row: 1 / 2;
         }
 
         .original-price {
           grid-column: 1 / 2;
           grid-row: 2;
+          justify-self: start;
+        }
+
+        .sale-ends {
+          grid-column: 1 / 4;
+          grid-row: 1;
+          justify-self: end;
         }
       }
     }

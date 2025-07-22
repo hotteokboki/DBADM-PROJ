@@ -27,17 +27,29 @@ const Product = () => {
             console.warn("Invalid JSON in image_url", e)
           }
 
+          // Calculate days left before formatting
+          let daysLeft = null;
+          if (
+            productData.is_onSale === 1 || productData.is_onSale === "1"
+          ) {
+            const now = new Date();
+            const endDate = new Date(productData.end_date);
+            const timeDiff = endDate - now;
+            daysLeft = Math.ceil(timeDiff / (1000 * 60 * 60 * 24));
+          }
+
           // Prepare formatted product object
           const formattedProduct = {
             productId: productData.product_id,
             companyName: "Florecien Technologies Inc",
             productName: productData.product_name,
             productDescription: productData.product_description,
-            productPrice: parseFloat(productData.price), 
-            isOnSale: productData.is_onSale === 1 || productData.is_onSale === "1", 
+            productPrice: parseFloat(productData.price),
+            isOnSale: productData.is_onSale === 1 || productData.is_onSale === "1",
             discountType: productData.discount_type,
             discountValue: parseFloat(productData.discount_value),
             discountEndDate: productData.end_date,
+            daysLeft, // ✅ Add daysLeft here
             images: productData.image_url.map((url, i) => ({
               url,
               alt: `Product image ${i + 1}`,
@@ -46,7 +58,7 @@ const Product = () => {
               url,
               alt: `Thumbnail ${i + 1}`,
             })),
-          }
+          };
 
           console.log("Formatted Data: ", formattedProduct)
 
@@ -81,6 +93,7 @@ const Product = () => {
         discountType={product.discountType}
         discountValue={product.discountValue}
         productImages={product.images}
+        daysLeft={product.daysLeft}
       />
     </ProductWrapper>
   )
