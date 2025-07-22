@@ -110,11 +110,6 @@ exports.setProductInactive = async (productId, userId) => {
       'UPDATE'
     ]);
 
-
-    const logResult = await connection.query(logQuery, [productId, userId]);
-    if (logResult.affectedRows === 0) {
-      throw new Error("Failed to log product inactivity");
-    }
     // Fetch updated product
     const [rows] = await connection.query(
       "SELECT * FROM product WHERE product_id = ?",
