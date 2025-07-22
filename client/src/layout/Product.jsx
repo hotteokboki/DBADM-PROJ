@@ -49,7 +49,8 @@ const Product = () => {
             discountType: productData.discount_type,
             discountValue: parseFloat(productData.discount_value),
             discountEndDate: productData.end_date,
-            daysLeft, // ✅ Add daysLeft here
+            daysLeft, 
+            stock: productData.stock_quantity,
             images: productData.image_url.map((url, i) => ({
               url,
               alt: `Product image ${i + 1}`,
@@ -59,8 +60,6 @@ const Product = () => {
               alt: `Thumbnail ${i + 1}`,
             })),
           };
-
-          console.log("Formatted Data: ", formattedProduct)
 
           setProduct(formattedProduct)
         }
@@ -94,6 +93,7 @@ const Product = () => {
         discountValue={product.discountValue}
         productImages={product.images}
         daysLeft={product.daysLeft}
+        stock={product.stock}
       />
     </ProductWrapper>
   )

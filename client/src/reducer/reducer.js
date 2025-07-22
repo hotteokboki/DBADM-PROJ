@@ -76,10 +76,7 @@ const reducer = (state, action) => {
       return { ...state, cart: newCart };
     }
     case "GET_TOTAL_CART":
-      const totalCartCount = state.cart.reduce((total, currentItem) => {
-        return total + currentItem.amount
-      }, 0)
-      return { ...state, totalCartSize: totalCartCount }
+      return { ...state, totalCartSize: state.cart.length }
     case "READ_SCREENWIDTH":
       return { ...state, screenWidth: action.payload }
     case "SET_USER_ROLE":

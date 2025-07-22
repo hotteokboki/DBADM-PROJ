@@ -12,7 +12,8 @@ const ProductControls = ({
   isOnSale,
   discountType,
   discountValue,
-  images
+  images,
+  stock
 }) => {
   const { increaseAmount, decreaseAmount, addToCart, state, showSnackbar } = useGlobalContext()
 
@@ -55,22 +56,53 @@ const ProductControls = ({
   };
 
 
-
   return (
     <ControlsWrapper>
-      <div className="inner-controls">
-        <button onClick={() => decreaseAmount(productId)}>
-          <Minus />
-        </button>
-        <span className="amount">{state.amounts?.[productId] || 1}</span>
-        <button onClick={() => increaseAmount(productId)}>
-          <Plus />
-        </button>
-      </div>
-      <Button className="cart" func={handleAddToCart} color="#FFFFFF">
-        <Cart />
-        Add to Cart
-      </Button>
+      {stock === 0 ? (
+        <Button
+          className="wishlist"
+          func={async () => {
+            try {
+              const response = await axios.post(
+                `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/wishlist/add`,
+                {
+                  productId,
+                },
+                {
+                  withCredentials: true, // send cookie/session
+                }
+              );
+
+              if (!response.data.success) {
+                throw new Error("Add to wishlist failed");
+              }
+
+              showSnackbar("Item added to wishlist!", "success");
+            } catch (error) {
+              console.error("Wishlist add error:", error);
+              showSnackbar("Failed to add to wishlist", "error");
+            }
+          }}
+        >
+          Add to Wishlist
+        </Button>
+      ) : (
+        <>
+          <div className="inner-controls">
+            <button onClick={() => decreaseAmount(productId)}>
+              <Minus />
+            </button>
+            <span className="amount">{state.amounts?.[productId] || 1}</span>
+            <button onClick={() => increaseAmount(productId)}>
+              <Plus />
+            </button>
+          </div>
+          <Button className="cart" func={handleAddToCart} color="#FFFFFF">
+            <Cart />
+            Add to Cart
+          </Button>
+        </>
+      )}
     </ControlsWrapper>
   )
 }
@@ -97,6 +129,18 @@ const ControlsWrapper = styled.div`
     }
   }
 
+  .wishlist {
+    padding: 1.6rem;
+    background-color: hsl(0, 0%, 90%);
+    color: hsla(37, 85%, 55%, 0.95);
+    font-weight: 600;
+    text-align: center;
+    border-radius: 1rem;
+    border: 2px dashed hsla(37, 85%, 55%, 0.95);
+    font-size: 1.6rem;
+    width: 100%; /* Ensure full width like .cart */
+  }
+
   @media only screen and (min-width: 1000px) {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
@@ -110,6 +154,10 @@ const ControlsWrapper = styled.div`
 
     .cart {
       grid-column: 3 / 6;
+    }
+
+    .wishlist {
+      grid-column: 1 / 6;
     }
   }
 `

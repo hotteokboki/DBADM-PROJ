@@ -1,5 +1,5 @@
 import styled from "styled-components"
-import React, { useState, useEffect } from "react"
+import React, { useState, useEffect, useRef } from "react"
 import axios from "axios"
 import { useGlobalContext } from "../context/context"
 
@@ -13,6 +13,7 @@ export default function UpdateItem() {
     price: "",
     stock_quantity: "",
   })
+  const editFormRef = useRef(null)
 
   useEffect(() => {
     fetchProducts()
@@ -40,6 +41,13 @@ export default function UpdateItem() {
       price: product.price,
       stock_quantity: product.stock_quantity,
     })
+
+    // Delay scroll to wait for form to render
+    setTimeout(() => {
+      if (editFormRef.current) {
+        editFormRef.current.scrollIntoView({ behavior: "smooth", block: "start" })
+      }
+    }, 100) // You can tweak this delay if needed
   }
 
   const handleUpdateSubmit = async (e) => {
@@ -90,7 +98,7 @@ export default function UpdateItem() {
       <h1>Manage Products</h1>
 
       {editingProduct && (
-        <Form onSubmit={handleUpdateSubmit}>
+        <Form onSubmit={handleUpdateSubmit} ref={editFormRef}>
           <h2>Edit Product</h2>
           <label>
             Name

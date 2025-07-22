@@ -163,7 +163,8 @@ exports.getProductInformation = async (product_id) => {
         p.is_onSale, 
         d.discount_type, 
         d.discount_value, 
-        d.end_date 
+        d.end_date,
+        p.stock_quantity
       FROM product AS p
       LEFT JOIN product_discounts AS pd ON p.product_id = pd.product_id
       LEFT JOIN discounts AS d ON d.discount_id = pd.discount_id

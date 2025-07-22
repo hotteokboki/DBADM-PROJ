@@ -24,7 +24,7 @@ const Navigator = () => {
       { name: "transaction logs", path: "/transaction-logs" },
       { name: "admin logs", path: "/admin-logs" },
     ];
-  } else if (role === 3){
+  } else if (role === 3) {
     // Admin
     navLinks = [
       { name: "add item", path: "/add-item" },
@@ -96,7 +96,12 @@ const Navigator = () => {
             {isDropdownOpen && (
               <div className="dropdown-menu">
                 {!role && <Link to="/login">Login</Link>}
-                {role && <button onClick={handleLogout} className="logout-button">Logout</button>}
+                {role && (
+                  <>
+                    <Link to="/wishlist">Wishlist</Link>
+                    <button onClick={handleLogout} className="logout-button">Logout</button>
+                  </>
+                )}
               </div>
             )}
           </div>

@@ -4,6 +4,7 @@ import "@splidejs/react-splide/css"
 import { useGlobalContext } from "../context/context"
 import ImageOverlay from "./ImageOverlay"
 import styled from "styled-components"
+import { useNavigate } from "react-router-dom"
 
 const ImageCarousel = ({ productImages, productThumbnails }) => {
   const [imageIndex, setImageIndex] = useState(0)
@@ -16,11 +17,12 @@ const ImageCarousel = ({ productImages, productThumbnails }) => {
   const carouselRef = useRef(null)
   const overlayRef = useRef(null)
 
+  const navigate = useNavigate()
+
   const splideOptions = {
     pagination: false,
-    height: `${
-      screenWidth < 601 ? "30rem" : screenWidth < 768 ? "40rem" : "44.5rem"
-    }`,
+    height: `${screenWidth < 601 ? "30rem" : screenWidth < 768 ? "40rem" : "44.5rem"
+      }`,
     type: "loop",
     autoWidth: false,
     perPage: 1,
@@ -30,27 +32,33 @@ const ImageCarousel = ({ productImages, productThumbnails }) => {
   return (
     <>
       <CarouselWrapper>
-        <Splide
-          onClick={() => {
-            showImageOverlay()
-            if (carouselRef.current && overlayRef.current) {
-              overlayRef.current.sync(carouselRef.current.splide)
-              setImageIndex(carouselRef.current.splide.index)
-            }
-          }}
-          options={splideOptions}
-          ref={carouselRef}
-          onMove={() => setImageIndex(carouselRef.current.splide.index)}
-        >
-          {productImages.map((image, idx) => {
-            const { url, alt } = image
-            return (
-              <SplideSlide key={idx}>
-                <img src={url} alt={alt} />
-              </SplideSlide>
-            )
-          })}
-        </Splide>
+        <div className="carousel-container">
+          <button className="back-button" onClick={() => navigate(-1)}>
+            ← Back
+          </button>
+          <Splide
+            onClick={() => {
+              showImageOverlay()
+              if (carouselRef.current && overlayRef.current) {
+                overlayRef.current.sync(carouselRef.current.splide)
+                setImageIndex(carouselRef.current.splide.index)
+              }
+            }}
+            options={splideOptions}
+            ref={carouselRef}
+            onMove={() => setImageIndex(carouselRef.current.splide.index)}
+          >
+            {productImages.map((image, idx) => {
+              const { url, alt } = image
+              return (
+                <SplideSlide key={idx}>
+                  <img src={url} alt={alt} />
+                </SplideSlide>
+              )
+            })}
+          </Splide>
+        </div>
+
         <div className="thumbnails">
           {productThumbnails.map((thumbnail, idx) => {
             const { url, alt } = thumbnail
@@ -84,13 +92,32 @@ const ImageCarousel = ({ productImages, productThumbnails }) => {
 }
 
 const CarouselWrapper = styled.section`
+  .carousel-container {
+    position: relative;
+
+    .back-button {
+      position: absolute;
+      top: 1.2rem;
+      left: 1.2rem;
+      background-color: hsl(var(--white));
+      color: hsl(var(--orange));
+      border: none;
+      padding: 0.5rem 1.6rem;
+      font-size: 1.4rem;
+      font-weight: 600;
+      border-radius: 0.8rem;
+      cursor: pointer;
+      z-index: 10;
+
+      &:hover {
+        background-color: hsl(var(--light-grayish-blue));
+      }
+    }
+  }
+
   .splide {
     cursor: pointer;
     width: 100%;
-  }
-
-  .splide__track {
-    /* margin: 0 auto; */
   }
 
   .splide__arrow {

@@ -13,8 +13,8 @@ const ProductInfo = ({
   discountValue,
   daysLeft,
   productImages,
+  stock,
 }) => {
-
   return (
     <InfoWrapper>
       <div className="inner-info">
@@ -53,6 +53,17 @@ const ProductInfo = ({
             </>
           )}
         </div>
+        {typeof stock === "number" && (
+          <p className={`stock-info ${
+            stock === 0 ? "out" : stock < 10 ? "low" : "ok"
+          }`}>
+            {stock === 0
+              ? "Out of stock"
+              : stock < 10
+              ? `Only ${stock} left in stock!`
+              : `In stock: ${stock} item${stock > 1 ? "s" : ""}`}
+          </p>
+        )}
       </div>
       <ProductControls
         productId={productId}
@@ -62,6 +73,7 @@ const ProductInfo = ({
         discountType={discountType}
         discountValue={discountValue}
         images={productImages}
+        stock={stock}
       />
     </InfoWrapper>
   );
@@ -105,6 +117,20 @@ const InfoWrapper = styled.section`
 
       li {
         margin-bottom: 0.75rem;
+      }
+    }
+
+    .stock-info {
+      font-size: 1.4rem;
+      font-weight: 500;
+      margin-top: 1.6rem;
+
+      &.low {
+        color: hsl(var(--red)); /* Replace with a red variable or fallback */
+      }
+
+      &.ok {
+        color: hsl(var(--dark-grayish-blue));
       }
     }
 
