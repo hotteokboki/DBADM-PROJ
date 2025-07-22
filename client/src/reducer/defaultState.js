@@ -12,5 +12,8 @@ export const defaultState = {
     message: "",
     type: "", // "success", "error", etc.
     visible: false,
-  }
-}
+  },
+  
+  loading: false,
+  user: null, // This should contain: { id, defaultAddressId, preferredCurrency, etc. }
+};

@@ -7,8 +7,10 @@ import { useGlobalContext } from "../context/context";
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const { showSnackbar } = useGlobalContext();
-  const navigate = useNavigate(); // ✅ Added navigation
+
+  // ✅ ONLY call useGlobalContext INSIDE the component
+  const { showSnackbar, dispatch } = useGlobalContext();
+  const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,17 +24,20 @@ const Login = () => {
       );
 
       if (response.data.success) {
-        showSnackbar(response.data.message, "success"); // ✅ this is the correct use
+        // Dispatch user data to context
+        dispatch({ type: "SET_USER", payload: response.data.data });
+
+        showSnackbar(response.data.message, "success");
 
         setTimeout(() => {
           navigate("/");
-        }, 3000);
+        }, 1000);
       } else {
-        showSnackbar(response.data.message, "error")
+        showSnackbar(response.data.message, "error");
       }
     } catch (error) {
       if (error.response && error.response.data) {
-        showSnackbar(error.response.data.message, "error")
+        showSnackbar(error.response.data.message, "error");
       } else {
         showSnackbar("Something went wrong. Please try again.", "error");
       }
@@ -65,7 +70,7 @@ const Login = () => {
 
           <button type="submit">Login</button>
           <p className="signup-link">
-            Don’t have an account? <Link to="/register">Register</Link>
+            Don't have an account? <Link to="/register">Register</Link>
           </p>
         </form>
       </div>

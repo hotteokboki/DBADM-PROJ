@@ -11,6 +11,8 @@ const productRoutes = require("./routes/productRoutes.js")
 const discountsRoutes = require("./routes/discountsRoutes.js")
 const cartRoutes = require("./routes/cartRoutes.js")
 const wishlistRoutes = require("./routes/wishlistRoutes.js")
+const checkoutRoutes = require("./routes/checkoutRoutes.js");
+
 
 require("dotenv").config();
 require("./utils/scheduler");
@@ -49,6 +51,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/discounts", discountsRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
+app.use("/api/checkout", checkoutRoutes);
+
 
 app.get("/", (req, res) => {
   res.send("Welcome to DBADM Proj!");

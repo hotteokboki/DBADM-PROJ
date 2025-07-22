@@ -26,7 +26,6 @@ const reducer = (state, action) => {
           [action.payload]: (state.amounts[action.payload] || 1) + 1,
         },
       }
-
     case "DECREASE_AMOUNT":
       return {
         ...state,
@@ -35,6 +34,36 @@ const reducer = (state, action) => {
           [action.payload]: Math.max((state.amounts[action.payload] || 1) - 1, 1),
         },
       }
+    case "CLEAR_CART":
+      return { ...state, cart: [], amounts: {}, totalCartSize: 0 };
+
+    // 🔥 ADD THIS - Missing loading state management
+    case "SET_LOADING":
+      return { ...state, loading: action.payload };
+
+    // 🔥 ADD THIS - User state management
+    case "SET_USER":
+  return {
+    ...state,
+    user: action.payload, // Store the full user object
+    userRole: action.payload.role // Keep role for backward compatibility
+  };
+    
+    case "UPDATE_USER":
+      return { ...state, user: { ...state.user, ...action.payload } };
+
+    case "CLEAR_USER":
+  return {
+    ...state,
+    user: null,
+    userRole: null
+  };
+
+    // 🔥 ADD THIS - For debugging
+    case "TEST_ACTION":
+      console.log("✅ Test action received:", action.payload);
+      return state;
+
     case "ADD_TO_CART":
       if (state.userRole === 2) return state; // admin cannot add to cart
 

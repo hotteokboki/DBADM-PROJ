@@ -1,7 +1,7 @@
-import styled from "styled-components"
-import { Delete } from "../icons"
-import { useGlobalContext } from "../context/context"
-import PropTypes from "prop-types"
+import styled from "styled-components";
+import { Delete } from "../icons";
+import { useGlobalContext } from "../context/context";
+import PropTypes from "prop-types";
 
 const SingleCartItem = ({
   productId,
@@ -12,17 +12,33 @@ const SingleCartItem = ({
   discountType,
   discountValue,
   images,
+  // ✅ NEW - Currency conversion props
+  displayPrice,
+  displayCurrency,
+  displayCurrencySymbol,
+  convertedPrice,
+  selectedCurrency,
+  currencySymbol,
 }) => {
   const { removeItem } = useGlobalContext();
 
-  const validPrice = typeof productPrice === "number" ? productPrice : 0;
+  // ✅ UPDATED - Use converted price if available, otherwise calculate normally
+  let actualPrice;
 
-  let actualPrice = validPrice;
-  if (isOnSale) {
-    if (discountType === "percentage") {
-      actualPrice = validPrice * (1 - discountValue / 100);
-    } else if (discountType === "fixed") {
-      actualPrice = validPrice - discountValue;
+  if (displayPrice !== undefined) {
+    // Use the converted price passed from FloatingCart
+    actualPrice = displayPrice;
+  } else {
+    // Fallback to original calculation
+    const validPrice = typeof productPrice === "number" ? productPrice : 0;
+    actualPrice = validPrice;
+
+    if (isOnSale) {
+      if (discountType === "percentage") {
+        actualPrice = validPrice * (1 - discountValue / 100);
+      } else if (discountType === "fixed") {
+        actualPrice = validPrice - discountValue;
+      }
     }
   }
 
@@ -31,14 +47,21 @@ const SingleCartItem = ({
   const totalPrice = (actualPrice * amount).toFixed(2);
   const primaryImage = images?.[0] || { url: "", alt: "Product image" };
 
+  // ✅ UPDATED - Use currency symbol if available
+  const symbol = displayCurrencySymbol || currencySymbol || "$";
+
   return (
     <SingleItemWrapper>
       <img src={primaryImage.url} alt={primaryImage.alt} />
       <div className="item-info">
         <p className="name">{productName}</p>
         <p className="total">
-          ${actualPrice.toFixed(2)}&nbsp;x&nbsp;{amount}&nbsp;
-          <span>${totalPrice}</span>
+          {symbol}
+          {actualPrice.toFixed(2)}&nbsp;x&nbsp;{amount}&nbsp;
+          <span>
+            {symbol}
+            {totalPrice}
+          </span>
         </p>
       </div>
       <button onClick={() => removeItem(productId)}>
@@ -75,7 +98,21 @@ const SingleItemWrapper = styled.li`
       }
     }
   }
-`
+
+  button {
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    &:hover {
+      opacity: 0.7;
+    }
+  }
+`;
 
 SingleCartItem.propTypes = {
   productId: PropTypes.number,
@@ -87,6 +124,13 @@ SingleCartItem.propTypes = {
   discountType: PropTypes.string,
   discountValue: PropTypes.number,
   images: PropTypes.array,
+  // ✅ NEW - Currency conversion props
+  displayPrice: PropTypes.number,
+  displayCurrency: PropTypes.string,
+  displayCurrencySymbol: PropTypes.string,
+  convertedPrice: PropTypes.number,
+  selectedCurrency: PropTypes.string,
+  currencySymbol: PropTypes.string,
 };
 
 SingleCartItem.defaultProps = {
@@ -97,17 +141,13 @@ SingleCartItem.defaultProps = {
   discountType: null,
   discountValue: 0,
   images: [],
+  // ✅ NEW - Currency conversion defaults
+  displayPrice: undefined,
+  displayCurrency: undefined,
+  displayCurrencySymbol: undefined,
+  convertedPrice: undefined,
+  selectedCurrency: undefined,
+  currencySymbol: undefined,
 };
 
-// productId: 1,
-// companyName: "Sneaker Company",
-// productName: "Fall Limited Edition Sneakers",
-// productDescription:
-//   "These low-profile sneakers are your perfect casual wear companion. Featuring a durable rubber outer sole, they’ll withstand everything the weather can offer.",
-// productPrice: 250,
-// isOnSale: true,
-// salePercent: 0.5,
-// amount: 0,
-// images: productImages,
-
-export default SingleCartItem
+export default SingleCartItem;

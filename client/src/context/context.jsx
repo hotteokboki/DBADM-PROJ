@@ -1,6 +1,6 @@
-import { useEffect, useContext, createContext, useReducer } from "react"
-import reducer from "../reducer/reducer"
-import { defaultState } from "../reducer/defaultState"
+import { useEffect, useContext, createContext, useReducer } from "react";
+import reducer from "../reducer/reducer";
+import { defaultState } from "../reducer/defaultState";
 import {
   SHOW_SIDEBAR,
   HIDE_SIDEBAR,
@@ -15,25 +15,29 @@ import {
   ADD_TO_CART,
   UPDATE_CART,
   GET_TOTAL_CART,
-} from "../reducer/actions"
+} from "../reducer/actions";
 import axios from "axios";
 
-const AppContext = createContext()
+const AppContext = createContext();
 
 const AppProvider = ({ children }) => {
-  const [state, dispatch] = useReducer(reducer, defaultState)
+  const [state, dispatch] = useReducer(reducer, defaultState);
 
   // Inside AppProvider
+  // In your context file - UPDATE this useEffect:
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/me`, {
-          withCredentials: true,
-        });
+        const response = await axios.get(
+          `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/auth/me`,
+          {
+            withCredentials: true,
+          }
+        );
         if (response.data.success) {
-          const role = response.data.user.role;
-          console.log("SET USER ROLE VAL: ", role);
-          dispatch({ type: "SET_USER_ROLE", payload: role });
+          // 🔥 FIXED: Store the FULL user object, not just the role
+          console.log("Full user data:", response.data.user);
+          dispatch({ type: "SET_USER", payload: response.data.user });
         }
       } catch (err) {
         console.log("User not logged in or session expired.");
@@ -46,13 +50,18 @@ const AppProvider = ({ children }) => {
   useEffect(() => {
     const fetchCart = async () => {
       try {
-        const res = await axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/cart/get-cart-items`, {
-          withCredentials: true
-        });
+        const res = await axios.get(
+          `${
+            import.meta.env.VITE_WEB_APP_BACKEND_PORT
+          }/api/cart/get-cart-items`,
+          {
+            withCredentials: true,
+          }
+        );
 
         if (res.data.success) {
           // Normalize the cart structure here
-          const normalizedCart = res.data.cartItems.map(item => ({
+          const normalizedCart = res.data.cartItems.map((item) => ({
             productId: item.product_id,
             productName: item.product_name,
             productPrice: parseFloat(item.price),
@@ -60,7 +69,9 @@ const AppProvider = ({ children }) => {
             isOnSale: !!item.is_onSale,
             discountType: item.discount_type || null,
             discountValue: item.discount_value || null,
-            images: Array.isArray(item.images) ? item.images : [{ url: item.images, alt: item.product_name }],
+            images: Array.isArray(item.images)
+              ? item.images
+              : [{ url: item.images, alt: item.product_name }],
           }));
 
           dispatch({
@@ -101,28 +112,28 @@ const AppProvider = ({ children }) => {
   };
 
   const showSidebar = () => {
-    dispatch({ type: SHOW_SIDEBAR })
-  }
+    dispatch({ type: SHOW_SIDEBAR });
+  };
 
   const hideSidebar = () => {
-    dispatch({ type: HIDE_SIDEBAR })
-  }
+    dispatch({ type: HIDE_SIDEBAR });
+  };
 
   const showImageOverlay = () => {
-    dispatch({ type: SHOW_OVERLAY })
-  }
+    dispatch({ type: SHOW_OVERLAY });
+  };
 
   const hideImageOverlay = () => {
-    dispatch({ type: HIDE_OVERLAY })
-  }
+    dispatch({ type: HIDE_OVERLAY });
+  };
 
   const showCart = () => {
-    dispatch({ type: SHOW_CART })
-  }
+    dispatch({ type: SHOW_CART });
+  };
 
   const hideCart = () => {
-    dispatch({ type: HIDE_CART })
-  }
+    dispatch({ type: HIDE_CART });
+  };
 
   const increaseAmount = (id) => {
     dispatch({ type: "INCREASE_AMOUNT", payload: id });
@@ -133,57 +144,58 @@ const AppProvider = ({ children }) => {
   };
 
   const addToCart = (amount, item) => {
-    if (!amount) return
+    if (!amount) return;
     dispatch({
       type: ADD_TO_CART,
       payload: {
         item,
         amount,
       },
-    })
-  }
+    });
+  };
 
   const updateCart = () => {
-    dispatch({ type: UPDATE_CART })
-  }
+    dispatch({ type: UPDATE_CART });
+  };
 
   const getTotalCartAmount = () => {
-    dispatch({ type: GET_TOTAL_CART })
-  }
+    dispatch({ type: GET_TOTAL_CART });
+  };
 
   const readScreenWidth = () => {
-    dispatch({ type: READ_SCREENWIDTH, payload: window.innerWidth })
-  }
+    dispatch({ type: READ_SCREENWIDTH, payload: window.innerWidth });
+  };
 
   const showSnackbar = (message, type = "success") => {
-    dispatch({ type: "SHOW_SNACKBAR", payload: { message, type } })
+    dispatch({ type: "SHOW_SNACKBAR", payload: { message, type } });
 
     setTimeout(() => {
-      dispatch({ type: "HIDE_SNACKBAR" })
-    }, 3000) // auto-hide after 3 seconds
-  }
+      dispatch({ type: "HIDE_SNACKBAR" });
+    }, 3000); // auto-hide after 3 seconds
+  };
 
   useEffect(() => {
-    getTotalCartAmount()
-  }, [state.amount, state.cart])
+    getTotalCartAmount();
+  }, [state.amount, state.cart]);
 
   useEffect(() => {
-    window.addEventListener("resize", readScreenWidth)
+    window.addEventListener("resize", readScreenWidth);
     // Cleanup function to remove eventlistener after reading screenwidth, hide overlay if showing when screen width is below 768
     if (state.screenWidth < 768 && state.showingOverlay) {
-      dispatch({ type: HIDE_OVERLAY })
+      dispatch({ type: HIDE_OVERLAY });
     }
     if (state.screenWidth > 768 && state.showSidebar) {
-      dispatch({ type: HIDE_SIDEBAR })
+      dispatch({ type: HIDE_SIDEBAR });
     }
 
-    return () => window.removeEventListener("resize", readScreenWidth)
-  }, [state.screenWidth])
+    return () => window.removeEventListener("resize", readScreenWidth);
+  }, [state.screenWidth]);
 
   return (
     <AppContext.Provider
       value={{
         state,
+        dispatch,
         showSidebar,
         hideSidebar,
         showImageOverlay,
@@ -201,11 +213,11 @@ const AppProvider = ({ children }) => {
     >
       {children}
     </AppContext.Provider>
-  )
-}
+  );
+};
 
 const useGlobalContext = () => {
-  return useContext(AppContext)
-}
+  return useContext(AppContext);
+};
 
-export { useGlobalContext, AppProvider }
+export { useGlobalContext, AppProvider };

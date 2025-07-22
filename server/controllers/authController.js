@@ -74,6 +74,29 @@ const login = async (req, res) => {
   }
 };
 
+const checkSession = async (req, res) => {
+  try {
+    if (req.session && req.session.user) {
+      return res.status(200).json({
+        success: true,
+        message: "User is logged in",
+        data: req.session.user,
+      });
+    } else {
+      return res.status(401).json({
+        success: false,
+        message: "No active session",
+      });
+    }
+  } catch (error) {
+    console.error("Session check error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Server error during session check",
+    });
+  }
+};
+
 const logout = async (req, res) => {
   try {
     const sessionId = req.sessionID;
@@ -119,4 +142,4 @@ const logout = async (req, res) => {
   }
 };
 
-module.exports = { register, login, logout };
+module.exports = { register, login, logout,checkSession };
