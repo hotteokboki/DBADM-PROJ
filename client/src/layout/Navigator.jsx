@@ -21,10 +21,14 @@ const Navigator = () => {
   if (role === 2) {
     // Admin
     navLinks = [
-      { name: "add item", path: "/add-item" },
-      { name: "update item", path: "/update-item" },
       { name: "transaction logs", path: "/transaction-logs" },
       { name: "admin logs", path: "/admin-logs" },
+    ];
+  } else if (role === 3){
+    // Admin
+    navLinks = [
+      { name: "add item", path: "/add-item" },
+      { name: "update item", path: "/update-item" },
       { name: "manage discount", path: "/manage-discount" },
     ];
   } else {
