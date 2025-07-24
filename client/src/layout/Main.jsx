@@ -14,6 +14,7 @@ import AddItem from "./AddItem.jsx"
 import ManageDiscount from "./ManageDiscounts.jsx"
 import Wishlist from "../components/Wishlist.jsx"
 import WishlistProductDetail from "../components/WishlistProductDetail.jsx"
+import Orders from "./Orders.jsx"
 
 const Main = () => {
   return (
@@ -33,6 +34,7 @@ const Main = () => {
         <Route path="/product/:id" element={<Product />} />
         <Route path="/wishlist/product/:id" element={<WishlistProductDetail />} />
         <Route path="/wishlist" element={<Wishlist />} />
+        <Route path="/orders" element={<Orders />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </MainWrapper>

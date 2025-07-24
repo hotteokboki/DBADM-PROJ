@@ -12,11 +12,7 @@ const Sidebar = ({ isShowing }) => {
   if (role === 2) {
     //  Admin
     sideBarLinks = [
-      { name: "Add Item", path: "/add-item" },
-      { name: "Update Item", path: "/update-item" },
-      { name: "Transaction Logs", path: "/transaction-logs" },
       { name: "Admin Logs", path: "/admin-logs" },
-      { name: "Manage Discount", path: "/manage-discount" },
     ];
   } else if (role === 3) {
     // Staff
@@ -24,6 +20,7 @@ const Sidebar = ({ isShowing }) => {
       { name: "Add Item", path: "/add-item" },
       { name: "Update Item", path: "/update-item" },
       { name: "Manage Discount", path: "/manage-discount" },
+      { name: "Transaction Logs", path: "/transaction-logs" },
     ];
   } else {
     // Customer

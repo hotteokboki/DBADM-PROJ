@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
 
-export default function TransactionLogs() {
+export default function Orders() {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -10,7 +10,7 @@ export default function TransactionLogs() {
     const fetchOrders = async () => {
     const baseURL = import.meta.env.VITE_WEB_APP_BACKEND_PORT;
       try {
-        const res = await axios.get(`${baseURL}/api/orders/get-orders`, {
+        const res = await axios.get(`${baseURL}/api/orders/get-user-orders`, {
             withCredentials: true,
         });
         if (res.data.success) {
@@ -28,7 +28,7 @@ export default function TransactionLogs() {
 
   return (
     <Grid>
-      <h1>Transaction Logs</h1>
+      <h1>My Orders</h1>
 
       {loading ? (
         <p>Loading...</p>

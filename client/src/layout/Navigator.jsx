@@ -22,15 +22,15 @@ const Navigator = () => {
   if (role === 2) {
     // Admin
     navLinks = [
-      { name: "transaction logs", path: "/transaction-logs" },
       { name: "admin logs", path: "/admin-logs" },
     ];
   } else if (role === 3) {
-    // Admin
+    // Staff
     navLinks = [
       { name: "add item", path: "/add-item" },
       { name: "update item", path: "/update-item" },
       { name: "manage discount", path: "/manage-discount" },
+      { name: "transaction logs", path: "/transaction-logs" },
     ];
   } else {
     // Customer or Guest
