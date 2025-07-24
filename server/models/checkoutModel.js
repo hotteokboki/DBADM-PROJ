@@ -54,15 +54,69 @@ const getCurrencyConversion = async (connection, fromCurrency, toCurrency) => {
   return toRate / fromRate;
 };
 
-// ✅ FIXED - Updated processCheckout function without preferred_currency dependency
+// ✅ UPDATED - Create shipping address record with separate fields
+const createShippingAddress = async (connection, userId, addressData) => {
+  const addressId = randomUUID();
+  
+  // ✅ NEW - Get user's full name from users table
+  const [userResult] = await connection.query(
+    `SELECT first_name, last_name FROM users WHERE user_id = ?`,
+    [userId]
+  );
+  
+  if (!userResult[0]) {
+    throw new Error('User not found');
+  }
+  
+  const fullName = `${userResult[0].first_name} ${userResult[0].last_name}`.trim();
+  
+  // ✅ UPDATED - Insert with separate address fields
+  await connection.query(
+    `INSERT INTO user_addresses (
+      address_id, 
+      user_id, 
+      full_name, 
+      phone_number, 
+      street_address, 
+      city, 
+      province, 
+      postal_code, 
+      country, 
+      is_default
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    [
+      addressId,
+      userId,
+      fullName,
+      addressData.phone_number || '',
+      addressData.street_address.trim(),
+      addressData.city.trim(),
+      addressData.province.trim(),
+      addressData.postal_code.trim(),
+      addressData.country.trim(),
+      0   // Not default address
+    ]
+  );
+  
+  return addressId;
+};
 
-exports.processCheckout = async ({ userId, cartItems, addressId, paymentMode, currencyCode = 'PHP' }) => {
+// ✅ UPDATED - Updated processCheckout function
+exports.processCheckout = async ({ userId, cartItems, addressId, newAddress, paymentMode, currencyCode = 'PHP' }) => {
   const connection = await mySQL.getConnection();
   try {
     await connection.beginTransaction();
 
-    // Validate address if provided
-    if (addressId) {
+    let finalAddressId = addressId;
+
+    // ✅ UPDATED - Handle address logic
+    if (newAddress) {
+      // Create new address with separate fields
+      console.log("🔵 Creating new shipping address with separate fields:", newAddress);
+      finalAddressId = await createShippingAddress(connection, userId, newAddress);
+      console.log("🔵 Created address with ID:", finalAddressId);
+    } else if (addressId) {
+      // ✅ NEW - Validate existing address belongs to user
       const [addressCheck] = await connection.query(
         `SELECT address_id FROM user_addresses WHERE address_id = ? AND user_id = ?`,
         [addressId, userId]
@@ -71,6 +125,9 @@ exports.processCheckout = async ({ userId, cartItems, addressId, paymentMode, cu
       if (!addressCheck[0]) {
         throw new Error('Invalid address for this user');
       }
+      console.log("🔵 Using existing address ID:", addressId);
+    } else {
+      throw new Error('No address provided');
     }
 
     // Validate currency exists
@@ -165,11 +222,11 @@ exports.processCheckout = async ({ userId, cartItems, addressId, paymentMode, cu
       [transactionId, userId, totalAmount, pendingStatusId, paymentMode, currencyCode, referenceCode]
     );
 
-    // Create order
+    // Create order with final address ID
     await connection.query(
       `INSERT INTO orders (order_id, user_id, order_total_amount, transaction_id, address_id, status)
        VALUES (?, ?, ?, ?, ?, 'pending')`,
-      [orderId, userId, totalAmount, transactionId, addressId]
+      [orderId, userId, totalAmount, transactionId, finalAddressId]
     );
 
     // Add order items and update stock
@@ -180,7 +237,6 @@ exports.processCheckout = async ({ userId, cartItems, addressId, paymentMode, cu
          VALUES (?, ?, ?, ?, ?)`,
         [randomUUID(), orderId, item.productId, item.quantity, item.priceAtOrder]
       );
-
 
 
       // Disable product if out of stock
@@ -210,7 +266,10 @@ exports.processCheckout = async ({ userId, cartItems, addressId, paymentMode, cu
       referenceCode,
       totalAmount: totalAmount.toFixed(2),
       currency: currencyCode,
-      itemCount: validatedItems.length
+      itemCount: validatedItems.length,
+      addressId: finalAddressId,
+      paymentMode: paymentMode,
+      isNewAddress: !!newAddress // ✅ NEW - Indicate if a new address was created
     };
     
   } catch (error) {

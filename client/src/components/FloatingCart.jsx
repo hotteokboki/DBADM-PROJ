@@ -11,11 +11,90 @@ const FloatingCart = ({ className }) => {
   const [selectedCurrency, setSelectedCurrency] = useState(
     state.user?.preferredCurrency || "PHP"
   );
+  const [selectedPaymentMode, setSelectedPaymentMode] = useState("Credit Card");
   const [loading, setLoading] = useState(false);
-  const [exchangeRates, setExchangeRates] = useState({}); // ✅ NEW - Store exchange rates
-  const [convertedPrices, setConvertedPrices] = useState({}); // ✅ NEW - Store converted prices
+  const [exchangeRates, setExchangeRates] = useState({});
+  const [convertedPrices, setConvertedPrices] = useState({});
+  const [userAddresses, setUserAddresses] = useState([]);
+  const [selectedAddressId, setSelectedAddressId] = useState("");
 
-  // ✅ NEW - Fetch exchange rates
+  // ✅ FIXED - Better state management for address selection
+  const [useNewAddress, setUseNewAddress] = useState(null); // null = not determined yet
+  const [addressesLoaded, setAddressesLoaded] = useState(false);
+
+  // ✅ Address form state
+  const [addressForm, setAddressForm] = useState({
+    phone_number: "",
+    street_address: "",
+    city: "",
+    province: "",
+    postal_code: "",
+    country: "",
+  });
+
+  const paymentModeOptions = [
+    { value: "Credit Card", label: "Credit Card" },
+    { value: "COD", label: "Cash on Delivery (COD)" },
+    { value: "GCash", label: "GCash" },
+  ];
+
+  // ✅ UPDATED - Fetch user addresses with better state management
+  useEffect(() => {
+    const fetchUserAddresses = async () => {
+      if (!state.user?.id) {
+        console.log("🔍 No user ID available, skipping address fetch");
+        setAddressesLoaded(true);
+        setUseNewAddress(true); // Default to new address if no user
+        return;
+      }
+
+      console.log("🔍 Fetching addresses for user:", state.user.id);
+
+      try {
+        // In FloatingCart.js - Fix the API endpoint
+        const res = await axios.get(
+          `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/users/addresses`,
+          { withCredentials: true }
+        );
+
+        console.log("🔍 Address fetch response:", res.data);
+
+        if (res.data.success) {
+          setUserAddresses(res.data.addresses);
+
+          if (res.data.addresses.length > 0) {
+            // User has existing addresses - default to using existing
+            const defaultAddress =
+              res.data.addresses.find((addr) => addr.is_default) ||
+              res.data.addresses[0];
+            setSelectedAddressId(defaultAddress.address_id);
+            setUseNewAddress(false); // ✅ Use existing address by default
+            console.log(
+              "🔍 Selected existing address:",
+              defaultAddress.address_id
+            );
+          } else {
+            // No existing addresses - force new address
+            setUseNewAddress(true);
+            console.log("🔍 No existing addresses, using new address form");
+          }
+        } else {
+          // API call succeeded but no addresses found
+          setUseNewAddress(true);
+        }
+      } catch (err) {
+        console.error("Failed to fetch user addresses:", err);
+        // If fetch fails, default to new address
+        setUseNewAddress(true);
+      } finally {
+        setAddressesLoaded(true);
+      }
+    };
+
+    fetchUserAddresses();
+  }, [state.user?.id]);
+
+  // Fetch exchange rates
   useEffect(() => {
     const fetchExchangeRates = async () => {
       try {
@@ -28,22 +107,19 @@ const FloatingCart = ({ className }) => {
 
         if (res.data.success) {
           setExchangeRates(res.data.rates);
-          console.log("✅ Exchange rates fetched:", res.data.rates);
         }
       } catch (err) {
-        console.error("❌ Failed to fetch exchange rates:", err);
+        console.error("Failed to fetch exchange rates:", err);
       }
     };
 
     fetchExchangeRates();
   }, []);
 
-  // Fetch available currencies on component mount
+  // Fetch available currencies
   useEffect(() => {
     const fetchCurrencies = async () => {
       try {
-        console.log("🔍 Fetching currencies...");
-
         const res = await axios.get(
           `${
             import.meta.env.VITE_WEB_APP_BACKEND_PORT
@@ -51,17 +127,11 @@ const FloatingCart = ({ className }) => {
           { withCredentials: true }
         );
 
-        console.log("✅ Response received:", res.data);
-
         if (res.data.success) {
           setAvailableCurrencies(res.data.currencies);
-          console.log("✅ Currencies set:", res.data.currencies);
-        } else {
-          console.error("❌ API returned success: false", res.data);
         }
       } catch (err) {
-        console.error("❌ Failed to fetch currencies:", err);
-        console.error("❌ Error details:", err.response?.data);
+        console.error("Failed to fetch currencies:", err);
       }
     };
 
@@ -73,7 +143,7 @@ const FloatingCart = ({ className }) => {
     setSelectedCurrency(state.user?.preferredCurrency || "PHP");
   }, [state.user?.preferredCurrency]);
 
-  // ✅ NEW - Convert prices when currency or cart changes
+  // Convert prices when currency or cart changes
   useEffect(() => {
     if (!exchangeRates || Object.keys(exchangeRates).length === 0) {
       return;
@@ -86,7 +156,6 @@ const FloatingCart = ({ className }) => {
         const basePrice = parseFloat(item.productPrice) || 0;
         let actualPrice = basePrice;
 
-        // Apply discounts first (in original currency)
         if (item.isOnSale) {
           if (item.discountType === "percentage") {
             actualPrice = basePrice * (1 - item.discountValue / 100);
@@ -95,8 +164,7 @@ const FloatingCart = ({ className }) => {
           }
         }
 
-        // Convert to selected currency
-        const baseCurrency = "PHP"; // Your base currency
+        const baseCurrency = "PHP";
         let convertedPrice = actualPrice;
 
         if (selectedCurrency !== baseCurrency) {
@@ -121,11 +189,36 @@ const FloatingCart = ({ className }) => {
     convertPrices();
   }, [selectedCurrency, exchangeRates, state.cart]);
 
-  const handleCheckout = async () => {
-    console.log("🔵 Checkout button clicked!");
+  // Handle address form changes
+  const handleAddressFormChange = (field, value) => {
+    setAddressForm((prev) => ({
+      ...prev,
+      [field]: value,
+    }));
+  };
 
+  // Validate address form
+  const validateAddressForm = () => {
+    const required = [
+      "street_address",
+      "city",
+      "province",
+      "postal_code",
+      "country",
+    ];
+    for (const field of required) {
+      if (!addressForm[field].trim()) {
+        return `${field
+          .replace("_", " ")
+          .replace(/\b\w/g, (l) => l.toUpperCase())} is required`;
+      }
+    }
+    return null;
+  };
+
+  // ✅ UPDATED - Better checkout validation and handling
+  const handleCheckout = async () => {
     try {
-      // Validation checks
       if (!state.user || !state.user.id) {
         alert("Please log in to checkout");
         return;
@@ -136,36 +229,69 @@ const FloatingCart = ({ className }) => {
         return;
       }
 
+      // ✅ Wait for addresses to load before validating
+      if (!addressesLoaded) {
+        alert("Please wait for address information to load");
+        return;
+      }
+
+      // ✅ FIXED - Address validation with better logic
+      if (useNewAddress === true) {
+        const validationError = validateAddressForm();
+        if (validationError) {
+          alert(validationError);
+          return;
+        }
+      } else if (useNewAddress === false) {
+        // Using existing address
+        if (!selectedAddressId) {
+          alert("Please select a shipping address");
+          return;
+        }
+      } else {
+        // useNewAddress is still null - addresses not loaded yet
+        alert("Please wait for address information to load");
+        return;
+      }
+
+      console.log("🔍 Checkout validation passed:", {
+        useNewAddress,
+        selectedAddressId,
+        addressForm: useNewAddress ? addressForm : null,
+      });
+
       const userId = state.user.id;
-      const addressId = state.user.defaultAddressId || null;
-      const paymentMode = "Credit Card";
+      const paymentMode = selectedPaymentMode;
       const currencyCode = selectedCurrency;
 
-      // Map cart items to match backend expectations
       const cartItems = state.cart.map((item) => ({
         productId: item.productId,
         quantity: item.amount,
       }));
 
-      console.log("🔵 Prepared cart items:", cartItems);
-      console.log("🔵 Selected currency:", currencyCode);
-
-      // Show loading state
       setLoading(true);
       dispatch({ type: "SET_LOADING", payload: true });
 
+      // ✅ Prepare checkout data
+      const checkoutData = {
+        userId,
+        paymentMode,
+        currencyCode,
+        cartItems,
+      };
+
+      if (useNewAddress) {
+        checkoutData.newAddress = addressForm;
+      } else {
+        checkoutData.addressId = selectedAddressId;
+      }
+
+      console.log("🔍 Checkout data being sent:", checkoutData);
+
       const res = await axios.post(
         `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/checkout`,
-        {
-          userId,
-          addressId,
-          paymentMode,
-          currencyCode,
-          cartItems,
-        },
-        {
-          withCredentials: true,
-        }
+        checkoutData,
+        { withCredentials: true }
       );
 
       if (res.data.success) {
@@ -174,9 +300,23 @@ Reference Code: ${res.data.referenceCode}
 Order ID: ${res.data.orderId}
 Total: ${selectedCurrency} ${res.data.totalAmount}
 Currency: ${currencyCode}
+Payment Mode: ${paymentMode}
 Items: ${res.data.itemCount}`);
 
         dispatch({ type: "CLEAR_CART" });
+
+        // Reset form after successful checkout
+        if (useNewAddress) {
+          setAddressForm({
+            phone_number: "",
+            street_address: "",
+            city: "",
+            province: "",
+            postal_code: "",
+            country: "",
+          });
+        }
+        setSelectedPaymentMode("Credit Card");
       } else {
         alert(`Checkout failed: ${res.data.message}`);
       }
@@ -198,7 +338,6 @@ Items: ${res.data.itemCount}`);
     }
   };
 
-  // ✅ UPDATED - Calculate total with converted prices
   const calculateTotal = () => {
     if (!state.cart || state.cart.length === 0) {
       return "0.00";
@@ -207,9 +346,7 @@ Items: ${res.data.itemCount}`);
     return state.cart
       .reduce((total, item) => {
         const convertedData = convertedPrices[item.productId];
-        if (!convertedData) {
-          return total; // Skip if conversion not ready
-        }
+        if (!convertedData) return total;
 
         const convertedPrice = convertedData.convertedPrice;
         const quantity = parseInt(item.amount) || 0;
@@ -219,16 +356,14 @@ Items: ${res.data.itemCount}`);
       .toFixed(2);
   };
 
-  // ✅ NEW - Get individual item price in selected currency
   const getItemPrice = (item) => {
     const convertedData = convertedPrices[item.productId];
     if (!convertedData) {
-      return parseFloat(item.productPrice) || 0; // Fallback to original price
+      return parseFloat(item.productPrice) || 0;
     }
     return convertedData.convertedPrice;
   };
 
-  // ✅ NEW - Get currency symbol
   const getCurrencySymbol = (currencyCode) => {
     const symbols = {
       PHP: "₱",
@@ -249,18 +384,14 @@ Items: ${res.data.itemCount}`);
       <ul className="cart-items">
         {state.cart.length > 0 ? (
           state.cart.map((cartItem) => {
-            // ✅ FIXED - Create enhanced cart item props but use original component
             const convertedPrice = getItemPrice(cartItem);
             const currencySymbol = getCurrencySymbol(selectedCurrency);
 
-            // Create enhanced item with converted price and currency info
             const enhancedCartItem = {
               ...cartItem,
-              // Override price display with converted price
               displayPrice: convertedPrice,
               displayCurrency: selectedCurrency,
               displayCurrencySymbol: currencySymbol,
-              // Keep original props for functionality
               convertedPrice: convertedPrice,
               selectedCurrency: selectedCurrency,
               currencySymbol: currencySymbol,
@@ -277,7 +408,7 @@ Items: ${res.data.itemCount}`);
       {state.cart.length > 0 && (
         <div className="checkout-section">
           {/* Currency Selection */}
-          <div className="currency-selection">
+          <div className="form-group">
             <label htmlFor="currency-select">Currency:</label>
             <select
               id="currency-select"
@@ -296,6 +427,183 @@ Items: ${res.data.itemCount}`);
             </select>
           </div>
 
+          {/* Payment Mode Selection */}
+          <div className="form-group">
+            <label htmlFor="payment-mode-select">Payment Mode:</label>
+            <select
+              id="payment-mode-select"
+              value={selectedPaymentMode}
+              onChange={(e) => setSelectedPaymentMode(e.target.value)}
+              disabled={loading || state.loading}
+            >
+              {paymentModeOptions.map((mode) => (
+                <option key={mode.value} value={mode.value}>
+                  {mode.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* ✅ UPDATED - Address Selection with loading state */}
+          <div className="form-group">
+            <label>Shipping Address:</label>
+
+            {/* Show loading state while addresses are being fetched */}
+            {!addressesLoaded && (
+              <div className="loading-addresses">
+                <p>Loading address information...</p>
+              </div>
+            )}
+
+            {/* Show address options only after addresses are loaded */}
+            {addressesLoaded && (
+              <>
+                {/* Address Options - only show if user has existing addresses */}
+                {userAddresses.length > 0 && (
+                  <div className="address-options">
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="addressOption"
+                        checked={useNewAddress === false}
+                        onChange={() => setUseNewAddress(false)}
+                        disabled={loading || state.loading}
+                      />
+                      Use existing address
+                    </label>
+                    <label className="radio-label">
+                      <input
+                        type="radio"
+                        name="addressOption"
+                        checked={useNewAddress === true}
+                        onChange={() => setUseNewAddress(true)}
+                        disabled={loading || state.loading}
+                      />
+                      Use new address
+                    </label>
+                  </div>
+                )}
+
+                {/* If no existing addresses, show info message */}
+                {userAddresses.length === 0 && (
+                  <div className="no-addresses-info">
+                    <p
+                      style={{
+                        fontSize: "1.3rem",
+                        color: "hsl(var(--dark-grayish-blue))",
+                        marginBottom: "1rem",
+                      }}
+                    >
+                      No saved addresses found. Please enter a new address
+                      below.
+                    </p>
+                  </div>
+                )}
+
+                {/* Existing Address Selection */}
+                {useNewAddress === false && userAddresses.length > 0 && (
+                  <select
+                    value={selectedAddressId}
+                    onChange={(e) => setSelectedAddressId(e.target.value)}
+                    disabled={loading || state.loading}
+                    className="address-select"
+                  >
+                    <option value="">Select an address</option>
+                    {userAddresses.map((address) => (
+                      <option
+                        key={address.address_id}
+                        value={address.address_id}
+                      >
+                        {address.full_name} - {address.street_address},{" "}
+                        {address.city}, {address.province} {address.postal_code}
+                        {address.is_default && " (Default)"}
+                      </option>
+                    ))}
+                  </select>
+                )}
+
+                {/* New Address Form */}
+                {(useNewAddress === true || userAddresses.length === 0) && (
+                  <div className="address-form">
+                    <div className="form-row">
+                      <input
+                        type="text"
+                        placeholder="Phone Number"
+                        value={addressForm.phone_number}
+                        onChange={(e) =>
+                          handleAddressFormChange(
+                            "phone_number",
+                            e.target.value
+                          )
+                        }
+                        disabled={loading || state.loading}
+                      />
+                    </div>
+                    <div className="form-row">
+                      <input
+                        type="text"
+                        placeholder="Street Address *"
+                        value={addressForm.street_address}
+                        onChange={(e) =>
+                          handleAddressFormChange(
+                            "street_address",
+                            e.target.value
+                          )
+                        }
+                        disabled={loading || state.loading}
+                        required
+                      />
+                    </div>
+                    <div className="form-row two-columns">
+                      <input
+                        type="text"
+                        placeholder="City *"
+                        value={addressForm.city}
+                        onChange={(e) =>
+                          handleAddressFormChange("city", e.target.value)
+                        }
+                        disabled={loading || state.loading}
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Province *"
+                        value={addressForm.province}
+                        onChange={(e) =>
+                          handleAddressFormChange("province", e.target.value)
+                        }
+                        disabled={loading || state.loading}
+                        required
+                      />
+                    </div>
+                    <div className="form-row two-columns">
+                      <input
+                        type="text"
+                        placeholder="Postal Code *"
+                        value={addressForm.postal_code}
+                        onChange={(e) =>
+                          handleAddressFormChange("postal_code", e.target.value)
+                        }
+                        disabled={loading || state.loading}
+                        required
+                      />
+                      <input
+                        type="text"
+                        placeholder="Country *"
+                        value={addressForm.country}
+                        onChange={(e) =>
+                          handleAddressFormChange("country", e.target.value)
+                        }
+                        disabled={loading || state.loading}
+                        required
+                      />
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+
           <div className="total">
             <span>
               Estimated Total: {getCurrencySymbol(selectedCurrency)}{" "}
@@ -308,18 +616,10 @@ Items: ${res.data.itemCount}`);
             </span>
           </div>
 
-          {/* Show warning if no address */}
-          {!state.user?.defaultAddressId && (
-            <p className="address-warning">
-              ⚠️ No shipping address set. You'll need to provide one during
-              checkout.
-            </p>
-          )}
-
           <Button func={handleCheckout} disabled={loading || state.loading}>
             {loading || state.loading
               ? "Processing..."
-              : `Checkout in ${selectedCurrency}`}
+              : `Checkout with ${selectedPaymentMode}`}
           </Button>
         </div>
       )}
@@ -338,6 +638,7 @@ const FloatingCartWrapper = styled.div`
   z-index: 1000;
   width: 36rem;
   box-shadow: 0 2rem 5rem -2rem hsl(var(--black) / 0.9);
+
   &.active {
     display: block;
   }
@@ -379,7 +680,7 @@ const FloatingCartWrapper = styled.div`
     padding: 2.4rem;
     padding-top: 0;
 
-    .currency-selection {
+    .form-group {
       margin-bottom: 1.6rem;
 
       label {
@@ -390,14 +691,16 @@ const FloatingCartWrapper = styled.div`
         color: hsl(var(--dark-grayish-blue));
       }
 
-      select {
+      select,
+      textarea,
+      input {
         width: 100%;
         padding: 1rem;
         border: 1px solid hsl(var(--divider));
         border-radius: 0.5rem;
         font-size: 1.4rem;
         background-color: hsl(var(--white));
-        cursor: pointer;
+        font-family: inherit;
 
         &:disabled {
           opacity: 0.6;
@@ -408,6 +711,70 @@ const FloatingCartWrapper = styled.div`
           outline: none;
           border-color: hsl(var(--primary-color));
           box-shadow: 0 0 0 0.3rem hsl(var(--primary-color) / 0.1);
+        }
+      }
+
+      select {
+        cursor: pointer;
+      }
+
+      /* ✅ Loading and info states */
+      .loading-addresses {
+        padding: 1rem;
+        text-align: center;
+        color: hsl(var(--dark-grayish-blue));
+        font-style: italic;
+      }
+
+      .no-addresses-info {
+        padding: 1rem;
+        background-color: hsl(210, 100%, 97%);
+        border: 1px solid hsl(210, 100%, 90%);
+        border-radius: 0.5rem;
+        margin-bottom: 1rem;
+      }
+
+      /* Address options styling */
+      .address-options {
+        display: flex;
+        gap: 1.5rem;
+        margin-bottom: 1rem;
+
+        .radio-label {
+          display: flex;
+          align-items: center;
+          gap: 0.5rem;
+          font-size: 1.3rem;
+          font-weight: 400;
+          cursor: pointer;
+
+          input[type="radio"] {
+            width: auto;
+            margin: 0;
+          }
+        }
+      }
+
+      .address-select {
+        margin-top: 0.5rem;
+      }
+
+      /* Address form styling */
+      .address-form {
+        margin-top: 1rem;
+
+        .form-row {
+          margin-bottom: 1rem;
+
+          &.two-columns {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+          }
+
+          input {
+            margin: 0;
+          }
         }
       }
     }
@@ -433,16 +800,6 @@ const FloatingCartWrapper = styled.div`
           margin-top: 0.4rem;
         }
       }
-    }
-
-    .address-warning {
-      background-color: #fff3cd;
-      color: #856404;
-      padding: 1rem;
-      border-radius: 0.5rem;
-      margin-bottom: 1.6rem;
-      font-size: 1.4rem;
-      text-align: center;
     }
 
     button {

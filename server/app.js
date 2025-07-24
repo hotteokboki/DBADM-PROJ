@@ -2,17 +2,17 @@ const express = require("express");
 const cors = require("cors");
 const cookieParser = require("cookie-parser");
 const session = require("express-session");
-
 const path = require('path');
+
+// Import routes
 const userRoutes = require("./routes/userRoutes.js"); 
 const authRoutes = require("./routes/authRoutes.js");
 const uploadRoutes = require("./routes/uploadRoutes.js"); 
-const productRoutes = require("./routes/productRoutes.js")
-const discountsRoutes = require("./routes/discountsRoutes.js")
-const cartRoutes = require("./routes/cartRoutes.js")
-const wishlistRoutes = require("./routes/wishlistRoutes.js")
+const productRoutes = require("./routes/productRoutes.js");
+const discountsRoutes = require("./routes/discountsRoutes.js");
+const cartRoutes = require("./routes/cartRoutes.js");
+const wishlistRoutes = require("./routes/wishlistRoutes.js");
 const checkoutRoutes = require("./routes/checkoutRoutes.js");
-
 
 require("dotenv").config();
 require("./utils/scheduler");
@@ -20,6 +20,7 @@ console.log("🔁 Scheduler loaded");
 
 const app = express();
 
+// Middleware
 app.use(cors({
   origin: `http://localhost:${process.env.CORS_ORIGIN_PORT}`, // Or origin: true for dev
   credentials: true, // 🔥 Must be set to send cookies
@@ -40,19 +41,19 @@ app.use(session({
 }));
 
 app.use(express.json());
+
 // Serve uploaded files
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
-app.use("/api/users", userRoutes);
+app.use("/api/users", userRoutes);        // ✅ This will handle /api/users/addresses
 app.use("/api/upload", uploadRoutes); 
 app.use("/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/discounts", discountsRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/checkout", checkoutRoutes);
-
+app.use("/api/checkout", checkoutRoutes);  // ✅ This will handle /api/checkout routes
 
 app.get("/", (req, res) => {
   res.send("Welcome to DBADM Proj!");

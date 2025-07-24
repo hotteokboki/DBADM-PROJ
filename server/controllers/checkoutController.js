@@ -2,7 +2,7 @@ const checkoutModel = require("../models/checkoutModel");
 
 exports.checkout = async (req, res) => {
   try {
-    const { userId, cartItems, addressId, paymentMode, currencyCode } = req.body;
+    const { userId, cartItems, addressId, newAddress, paymentMode, currencyCode } = req.body;
 
     // Validation
     if (!userId) {
@@ -26,11 +26,41 @@ exports.checkout = async (req, res) => {
       });
     }
 
-    // ✅ NEW - Currency code validation (optional, defaults to PHP if not provided)
+    // ✅ UPDATED - Address validation (either existing or new)
+    if (!addressId && !newAddress) {
+      return res.status(400).json({
+        success: false,
+        message: "Either existing address ID or new address information is required"
+      });
+    }
+
+    // ✅ NEW - Validate new address fields if provided
+    if (newAddress) {
+      const requiredFields = ['street_address', 'city', 'province', 'postal_code', 'country'];
+      for (const field of requiredFields) {
+        if (!newAddress[field] || typeof newAddress[field] !== 'string' || !newAddress[field].trim()) {
+          return res.status(400).json({
+            success: false,
+            message: `${field.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())} is required`
+          });
+        }
+      }
+    }
+
+    // Currency code validation (optional, defaults to PHP if not provided)
     if (currencyCode && typeof currencyCode !== 'string') {
       return res.status(400).json({
         success: false,
         message: "Currency code must be a valid string"
+      });
+    }
+
+    // Payment mode validation
+    const validPaymentModes = ['Credit Card', 'COD', 'GCash'];
+    if (!validPaymentModes.includes(paymentMode)) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid payment mode. Must be one of: Credit Card, COD, GCash"
       });
     }
 
@@ -45,13 +75,14 @@ exports.checkout = async (req, res) => {
       }
     }
 
-    // Process checkout - addressId can now be null, currencyCode defaults to PHP
+    // ✅ UPDATED - Process checkout with new parameters
     const result = await checkoutModel.processCheckout({ 
       userId, 
       cartItems, 
       addressId: addressId || null,
+      newAddress: newAddress || null,
       paymentMode,
-      currencyCode: currencyCode || 'PHP' // ✅ Default to PHP if not provided
+      currencyCode: currencyCode || 'PHP'
     });
     
     return res.status(200).json(result);
@@ -64,7 +95,7 @@ exports.checkout = async (req, res) => {
         error.message.includes('not available') ||
         error.message.includes('Invalid address') ||
         error.message.includes('Invalid currency') ||
-        error.message.includes('Currency conversion not available')) { // ✅ NEW error type
+        error.message.includes('Currency conversion not available')) {
       return res.status(400).json({ 
         success: false, 
         message: error.message 
@@ -80,9 +111,7 @@ exports.checkout = async (req, res) => {
   }
 };
 
-// Add this to your checkoutController.js
-
-// ✅ NEW - Get exchange rates endpoint
+// Get exchange rates endpoint
 exports.getExchangeRates = async (req, res) => {
   console.log("🔍 Getting exchange rates...");
   
@@ -125,7 +154,7 @@ exports.getExchangeRates = async (req, res) => {
   }
 };
 
-// ✅ NEW - Helper endpoint to get available currencies
+// Helper endpoint to get available currencies
 exports.getAvailableCurrencies = async (req, res) => {
   console.log("🔍 Getting available currencies...");
   
@@ -157,6 +186,56 @@ exports.getAvailableCurrencies = async (req, res) => {
     res.status(500).json({
       success: false,
       message: "Failed to fetch available currencies",
+      error: error.message
+    });
+  }
+};
+
+// ✅ FIXED - Update getUserAddresses in checkoutController.js
+exports.getUserAddresses = async (req, res) => {
+  try {
+    // ✅ FIXED - Use session data instead of req.user
+    const userId = req.session?.user?.id; // This matches your auth controller
+    
+    console.log("🔍 Session data:", req.session);
+    console.log("🔍 User ID from session:", userId);
+    
+    if (!userId) {
+      console.log("❌ No user ID found in session");
+      return res.status(401).json({
+        success: false,
+        message: "User authentication required"
+      });
+    }
+
+    const mySQL = require("../config/database.js");
+    const connection = await mySQL.getConnection();
+    
+    try {
+      const [addresses] = await connection.query(
+        `SELECT address_id, full_name, phone_number, street_address, 
+                city, province, postal_code, country, is_default
+         FROM user_addresses 
+         WHERE user_id = ?
+         ORDER BY is_default DESC, created_at DESC`,
+        [userId]
+      );
+      
+      console.log(`✅ Found ${addresses.length} addresses for user ${userId}`);
+      
+      res.status(200).json({
+        success: true,
+        addresses,
+        message: `Found ${addresses.length} addresses`
+      });
+    } finally {
+      connection.release();
+    }
+  } catch (error) {
+    console.error("❌ Get user addresses error:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to fetch user addresses",
       error: error.message
     });
   }
