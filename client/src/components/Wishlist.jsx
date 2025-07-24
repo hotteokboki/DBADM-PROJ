@@ -2,35 +2,52 @@ import styled from "styled-components";
 import { Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import axios from "axios";
-import ProductCardWithWishlist from "./ProductCardWithWishlist";
 
 const Wishlist = () => {
-    const [wishlistItems, setWishlistItems] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState([]);
 
-    useEffect(() => {
-        axios.get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/wishlist/get-wishlist`, {
-            withCredentials: true,
-        })
-            .then(res => {
-                if (res.data.success) {
-                    setWishlistItems(res.data.wishlist);
-                }
-            })
-            .catch(err => console.error("Error fetching wishlist:", err));
-    }, []);
+  useEffect(() => {
+    axios
+      .get(`${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/wishlist/get-wishlist`, {
+        withCredentials: true,
+      })
+      .then((res) => {
+        if (res.data.success) {
+          setWishlistItems(res.data.wishlist);
+        }
+      })
+      .catch((err) => console.error("Error fetching wishlist:", err));
+  }, []);
 
-    return (
-        <Grid>
-            <h1>Your Wishlist</h1>
-            {wishlistItems.map((item) => (
-                <ProductCardWithWishlist
-                    key={item.product_id}
-                    product={item}
-                    isWishlist={true}
-                />
-            ))}
-        </Grid>
-    );
+  return (
+    <Grid>
+      <h1>Your Wishlist</h1>
+      {wishlistItems.map((item) => {
+        let images = [];
+
+        try {
+          images = Array.isArray(item.image_url)
+            ? item.image_url
+            : JSON.parse(item.image_url || "[]");
+        } catch (e) {
+          console.error("Error parsing image_url:", item.image_url, e);
+        }
+
+        const thumbnail = images[0] || "/fallback.jpg";
+
+        return (
+          <Card key={item.product_id}>
+            <img src={thumbnail} alt={item.product_name} />
+            <h2>{item.product_name}</h2>
+            <p>${Number(item.price).toFixed(2)}</p>
+            <Link to={`/product/${item.product_id}`} state={{ isWishlist: true }}>
+              View Item
+            </Link>
+          </Card>
+        );
+      })}
+    </Grid>
+  );
 };
 
 const Grid = styled.section`

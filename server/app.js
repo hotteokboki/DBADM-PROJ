@@ -13,6 +13,7 @@ const discountsRoutes = require("./routes/discountsRoutes.js");
 const cartRoutes = require("./routes/cartRoutes.js");
 const wishlistRoutes = require("./routes/wishlistRoutes.js");
 const checkoutRoutes = require("./routes/checkoutRoutes.js");
+const waitlistRouter = require("./routes/waitlistRoutes.js");
 
 require("dotenv").config();
 require("./utils/scheduler");
@@ -46,14 +47,15 @@ app.use(express.json());
 app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 
 // Routes
-app.use("/api/users", userRoutes);        // ✅ This will handle /api/users/addresses
+app.use("/api/users", userRoutes); 
 app.use("/api/upload", uploadRoutes); 
 app.use("/auth", authRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/discounts", discountsRoutes);
 app.use("/api/cart", cartRoutes);
 app.use("/api/wishlist", wishlistRoutes);
-app.use("/api/checkout", checkoutRoutes);  // ✅ This will handle /api/checkout routes
+app.use("/api/checkout", checkoutRoutes); 
+app.use("/api/waitlist", waitlistRouter); 
 
 app.get("/", (req, res) => {
   res.send("Welcome to DBADM Proj!");

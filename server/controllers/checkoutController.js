@@ -113,22 +113,16 @@ exports.checkout = async (req, res) => {
 
 // Get exchange rates endpoint
 exports.getExchangeRates = async (req, res) => {
-  console.log("🔍 Getting exchange rates...");
-  
   try {
     const mySQL = require("../config/database.js");
     const connection = await mySQL.getConnection();
     
     try {
-      console.log("🔍 Querying currency table for exchange rates...");
-      
       const [rates] = await connection.query(
         `SELECT currency_code, exchange_rate_to_base 
          FROM currency 
          ORDER BY currency_code`
       );
-      
-      console.log("🔍 Exchange rates query result:", rates);
       
       // Convert array to object for easier lookup
       const ratesObject = {};
@@ -156,22 +150,16 @@ exports.getExchangeRates = async (req, res) => {
 
 // Helper endpoint to get available currencies
 exports.getAvailableCurrencies = async (req, res) => {
-  console.log("🔍 Getting available currencies...");
-  
   try {
     const mySQL = require("../config/database.js");
     const connection = await mySQL.getConnection();
     
     try {
-      console.log("🔍 Querying currency_codes table...");
-      
       const [currencies] = await connection.query(
         `SELECT currency_code, currency_name 
          FROM currency_codes 
          ORDER BY currency_name`
       );
-      
-      console.log("🔍 Query result:", currencies);
       
       res.status(200).json({
         success: true,
@@ -197,9 +185,6 @@ exports.getUserAddresses = async (req, res) => {
     // ✅ FIXED - Use session data instead of req.user
     const userId = req.session?.user?.id; // This matches your auth controller
     
-    console.log("🔍 Session data:", req.session);
-    console.log("🔍 User ID from session:", userId);
-    
     if (!userId) {
       console.log("❌ No user ID found in session");
       return res.status(401).json({
@@ -220,8 +205,6 @@ exports.getUserAddresses = async (req, res) => {
          ORDER BY is_default DESC, created_at DESC`,
         [userId]
       );
-      
-      console.log(`✅ Found ${addresses.length} addresses for user ${userId}`);
       
       res.status(200).json({
         success: true,

@@ -1,6 +1,9 @@
-import styled from "styled-components"
-import PropTypes from "prop-types"
-import ProductControls from "./ProductControls"
+import styled from "styled-components";
+import PropTypes from "prop-types";
+import ProductControls from "./ProductControls";
+import { useState, useEffect } from "react";
+import { useGlobalContext } from "../context/context"
+import axios from "axios";
 
 const ProductInfo = ({
   productId,
@@ -14,7 +17,53 @@ const ProductInfo = ({
   daysLeft,
   productImages,
   stock,
+  isWishlist,
+  isInWishlist,
 }) => {
+  const [joined, setJoined] = useState(false);
+  const { showSnackbar } = useGlobalContext();
+
+  const handleJoinWaitlist = async () => {
+    try {
+      const response = await axios.post(
+        `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/waitlist/join`,
+        { productId },
+        { withCredentials: true }
+      );
+
+      if (response.data.success) {
+        const msg = response.data.message || "Successfully joined the waitlist";
+        showSnackbar(msg, "success");
+      } else {
+        showSnackbar("Failed to join the waitlist", "error");
+      }
+    } catch (err) {
+      console.error("Failed to join waitlist:", err);
+      showSnackbar("Something went wrong while joining the waitlist", "error");
+    }
+  };
+
+  useEffect(() => {
+    const checkWaitlistStatus = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/waitlist/status/${productId}`,
+          { withCredentials: true }
+        );
+
+        if (response.data.isJoined) {
+          setJoined(true);
+        }
+      } catch (err) {
+        console.error("Error checking waitlist status:", err);
+      }
+    };
+
+    if (productId) {
+      checkWaitlistStatus();
+    }
+  }, [productId]);
+
   return (
     <InfoWrapper>
       <div className="inner-info">
@@ -28,9 +77,9 @@ const ProductInfo = ({
             </span>
           ))}
         </p>
+
         <div className="pricing">
           <p className="price">${Number(productPrice).toFixed(2)}</p>
-
           {isOnSale && discountType && discountValue && (
             <>
               <p className="percent">
@@ -38,13 +87,11 @@ const ProductInfo = ({
                   ? `${Number(discountValue).toFixed(0)}%`
                   : `-$${Number(discountValue).toFixed(2)}`}
               </p>
-
               <p className="original-price">
                 ${discountType === "percentage"
                   ? (productPrice / (1 - discountValue / 100)).toFixed(2)
                   : (productPrice + Number(discountValue)).toFixed(2)}
               </p>
-
               {daysLeft > 0 && (
                 <p className="sale-ends">
                   Sale ends in {daysLeft} day{daysLeft > 1 ? "s" : ""}
@@ -53,28 +100,47 @@ const ProductInfo = ({
             </>
           )}
         </div>
+
         {typeof stock === "number" && (
-          <p className={`stock-info ${
-            stock === 0 ? "out" : stock < 10 ? "low" : "ok"
-          }`}>
+          <p
+            className={`stock-info ${stock === 0 ? "out" : stock < 10 ? "low" : "ok"}`}
+          >
             {stock === 0
-              ? "Out of stock"
+              ? isInWishlist
+                ? "Out of Stock, Item Already in Wishlist!"
+                : "Out of stock"
               : stock < 10
-              ? `Only ${stock} left in stock!`
-              : `In stock: ${stock} item${stock > 1 ? "s" : ""}`}
+                ? `Only ${stock} left in stock!`
+                : `In stock: ${stock} item${stock > 1 ? "s" : ""}`}
           </p>
         )}
+
       </div>
-      <ProductControls
-        productId={productId}
-        productName={productName}
-        productPrice={productPrice}
-        isOnSale={isOnSale}
-        discountType={discountType}
-        discountValue={discountValue}
-        images={productImages}
-        stock={stock}
-      />
+
+      {/* === WISHLIST-SPECIFIC LOGIC === */}
+      {isWishlist && stock === 0 ? (
+        <div>
+          <button
+            onClick={handleJoinWaitlist}
+            disabled={joined}
+            className="wishlist"
+          >
+            {joined ? "You've joined the waitlist" : "Join Waitlist"}
+          </button>
+        </div>
+      ) : (
+        <ProductControls
+          productId={productId}
+          productName={productName}
+          productPrice={productPrice}
+          isOnSale={isOnSale}
+          discountType={discountType}
+          discountValue={discountValue}
+          images={productImages}
+          stock={stock}
+          isInWishlist={isInWishlist}
+        />
+      )}
     </InfoWrapper>
   );
 };
@@ -88,6 +154,29 @@ const InfoWrapper = styled.section`
 
   @media screen and (min-width: 768px) {
     margin: 0 auto;
+  }
+
+  .wishlist {
+    padding: 1.6rem;
+    background-color: hsl(0, 0%, 90%);
+    color: hsla(37, 85%, 55%, 0.95);
+    font-weight: 600;
+    text-align: center;
+    border-radius: 1rem;
+    border: 2px dashed hsla(37, 85%, 55%, 0.95);
+    font-size: 1.6rem;
+    width: 100%;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+
+    &:hover:not(:disabled) {
+      background-color: hsl(0, 0%, 85%);
+    }
+
+    &:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
   }
 
   .inner-info {

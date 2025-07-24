@@ -4,17 +4,23 @@ import axios from "axios"
 import ProductInfo from "../components/ProductInfo"
 import ImageCarousel from "../components/ImageCarousel"
 import styled from "styled-components"
+import { useLocation } from "react-router-dom";
 
 const Product = () => {
   const { id } = useParams()
   const [product, setProduct] = useState(null)
   const [loading, setLoading] = useState(true)
+  const location = useLocation();
+  const isWishlist = location.state?.isWishlist || false;
 
   useEffect(() => {
     const fetchProduct = async () => {
       try {
         const res = await axios.get(
-          `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/products/product-information/${id}`
+          `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/products/product-information/${id}`, 
+          {
+            withCredentials: true, // ✅ include cookie/session
+          }
         )
         const productData = res.data.products?.[0]
 
@@ -49,7 +55,7 @@ const Product = () => {
             discountType: productData.discount_type,
             discountValue: parseFloat(productData.discount_value),
             discountEndDate: productData.end_date,
-            daysLeft, 
+            daysLeft,
             stock: productData.stock_quantity,
             images: productData.image_url.map((url, i) => ({
               url,
@@ -59,9 +65,11 @@ const Product = () => {
               url,
               alt: `Thumbnail ${i + 1}`,
             })),
+            isInWishlist: Number(productData.isInWishlist) === 1,
           };
 
           setProduct(formattedProduct)
+          console.log("Product isInWishlist Value: ",formattedProduct.isInWishlist);
         }
       } catch (err) {
         console.error("Error fetching product:", err)
@@ -94,6 +102,8 @@ const Product = () => {
         productImages={product.images}
         daysLeft={product.daysLeft}
         stock={product.stock}
+        isWishlist={isWishlist}
+        isInWishlist={product.isInWishlist}
       />
     </ProductWrapper>
   )

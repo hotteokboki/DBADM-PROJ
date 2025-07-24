@@ -13,7 +13,8 @@ const ProductControls = ({
   discountType,
   discountValue,
   images,
-  stock
+  stock,
+  isInWishlist
 }) => {
   const { increaseAmount, decreaseAmount, addToCart, state, showSnackbar } = useGlobalContext()
 
@@ -55,37 +56,44 @@ const ProductControls = ({
     }
   };
 
-
   return (
     <ControlsWrapper>
       {stock === 0 ? (
-        <Button
-          className="wishlist"
-          func={async () => {
-            try {
-              const response = await axios.post(
-                `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/wishlist/add`,
-                {
-                  productId,
-                },
-                {
-                  withCredentials: true, // send cookie/session
+        isInWishlist ? (
+          <Button
+            className="wishlist"
+            func={() => {
+              window.location.href = "/wishlist";
+            }}
+          >
+            View Item in Wishlist
+          </Button>
+        ) : (
+          <Button
+            className="wishlist"
+            func={async () => {
+              try {
+                const response = await axios.post(
+                  `${import.meta.env.VITE_WEB_APP_BACKEND_PORT}/api/wishlist/add`,
+                  { productId },
+                  { withCredentials: true }
+                );
+
+                if (!response.data.success) {
+                  throw new Error("Add to wishlist failed");
                 }
-              );
 
-              if (!response.data.success) {
-                throw new Error("Add to wishlist failed");
+                showSnackbar("Item added to wishlist!", "success");
+                // Optional: update local isInWishlist state if needed
+              } catch (error) {
+                console.error("Wishlist add error:", error);
+                showSnackbar("Failed to add to wishlist", "error");
               }
-
-              showSnackbar("Item added to wishlist!", "success");
-            } catch (error) {
-              console.error("Wishlist add error:", error);
-              showSnackbar("Failed to add to wishlist", "error");
-            }
-          }}
-        >
-          Add to Wishlist
-        </Button>
+            }}
+          >
+            Add to Wishlist
+          </Button>
+        )
       ) : (
         <>
           <div className="inner-controls">

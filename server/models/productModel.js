@@ -201,7 +201,7 @@ exports.updateProduct = async (productId, fields) => {
   }
 };
 
-exports.getProductInformation = async (product_id) => {
+exports.getProductInformation = async (product_id, user_id) => {
   const connection = await mySQL.getConnection();
 
   try {
@@ -216,14 +216,18 @@ exports.getProductInformation = async (product_id) => {
         d.discount_type, 
         d.discount_value, 
         d.end_date,
-        p.stock_quantity
+        p.stock_quantity,
+        EXISTS (
+          SELECT 1 FROM wishlist w
+          WHERE w.user_id = ? AND w.product_id = p.product_id
+        ) AS isInWishlist
       FROM product AS p
       LEFT JOIN product_discounts AS pd ON p.product_id = pd.product_id
       LEFT JOIN discounts AS d ON d.discount_id = pd.discount_id
       WHERE p.product_id = ?
     `;
 
-    const [rows] = await connection.query(query, [product_id]);
+    const [rows] = await connection.query(query, [user_id, product_id]);
     return { success: true, products: rows };
   } catch (err) {
     throw err;
@@ -232,7 +236,7 @@ exports.getProductInformation = async (product_id) => {
   }
 };
 
-exports.getProductList = async (product_id) => {
+exports.getProductList = async () => {
   const connection = await mySQL.getConnection();
 
   try {

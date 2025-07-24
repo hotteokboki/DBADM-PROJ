@@ -122,8 +122,9 @@ const fetchProductList = async (req, res) => {
 const fetchProductInformation = async (req, res) => {
   try {
     const product_id = req.params.id;
-    
-    const result = await getProductInformation(product_id);
+    const user_id = req.session?.user?.id;
+
+    const result = await getProductInformation(product_id, user_id);
 
     res.status(200).json({
       success: true,
