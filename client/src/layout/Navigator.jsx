@@ -102,17 +102,16 @@ const Navigator = () => {
             </button>
 
             {isDropdownOpen && (
-              <div className="dropdown-menu">
-                {!role && <Link to="/login">Login</Link>}
+              <DropdownMenu>
+                {!role && <StyledLink to="/login">Login</StyledLink>}
                 {role && (
                   <>
-                    <Link to="/wishlist">Wishlist</Link>
-                    <button onClick={handleLogout} className="logout-button">
-                      Logout
-                    </button>
+                    <StyledLink to="/orders">My Orders</StyledLink>
+                    <StyledLink to="/wishlist">Wishlist</StyledLink>
+                    <LogoutButton onClick={handleLogout}>Logout</LogoutButton>
                   </>
                 )}
-              </div>
+              </DropdownMenu>
             )}
           </div>
           <FloatingCart className={`${state.showingCart ? "active" : ""}`} />
@@ -240,6 +239,47 @@ const NavigatorWrapper = styled.header`
         }
       }
     }
+  }
+`;
+
+const DropdownMenu = styled.div`
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 0.8rem;
+  background-color: white;
+  border: 1px solid hsl(var(--divider));
+  border-radius: 0.6rem;
+  box-shadow: 0 0.8rem 2rem rgba(0, 0, 0, 0.1);
+  width: 18rem;
+  z-index: 99;
+  display: flex;
+  flex-direction: column;
+`;
+
+const StyledLink = styled(Link)`
+  padding: 1rem 1.6rem;
+  font-size: 1.4rem;
+  color: hsl(var(--black));
+  text-decoration: none;
+
+  &:hover {
+    background-color: hsl(var(--very-light-gray));
+  }
+`;
+
+const LogoutButton = styled.button`
+  padding: 1rem 1.6rem;
+  font-size: 1.4rem;
+  color: hsl(var(--red));
+  background: none;
+  border: none;
+  text-align: left;
+  width: 100%;
+  cursor: pointer;
+
+  &:hover {
+    background-color: hsl(var(--very-light-gray));
   }
 `;
 

@@ -1,4 +1,5 @@
 const mySQL = require("../config/database.js");
+const { v4: uuidv4 } = require("uuid");
 
 exports.insertProductQuery = async (productData, userId) => {
   const connection = await mySQL.getConnection();
@@ -6,22 +7,46 @@ exports.insertProductQuery = async (productData, userId) => {
   try {
     await connection.beginTransaction();
 
+    // ✅ 1. Generate UUID manually
+    const productId = uuidv4();
+
+    // ✅ 2. Insert into product with UUID
     const productQuery = `
       INSERT INTO product 
-      (product_name, product_description, price, stock_quantity, image_url) 
-      VALUES (?, ?, ?, ?, ?)
+      (product_id, product_name, product_description, price, stock_quantity, image_url) 
+      VALUES (?, ?, ?, ?, ?, ?)
     `;
 
-    const [productResult] = await connection.query(productQuery, [
+    await connection.query(productQuery, [
+      productId,
       productData.product_name,
       productData.product_description,
       productData.price,
-      productData.stock_quantity || 0,
-      JSON.stringify(productData.image_urls || []), // Store array as JSON
+      0, // default stock_quantity
+      JSON.stringify(productData.image_urls || []),
+    ]);
+
+    // ✅ 3. Insert into product_logs with correct productId
+    const productLogsQuery = `
+      INSERT INTO product_logs 
+      (product_id, user_id, product_name, product_description, price, image_url, is_active, action_type) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await connection.query(productLogsQuery, [
+      productId,
+      userId,
+      productData.product_name,
+      productData.product_description,
+      productData.price,
+      JSON.stringify(productData.image_urls || []),
+      1, // is_active
+      'INSERT',
     ]);
 
     await connection.commit();
-    return { success: true, product_id: productResult.insertId };
+
+    return { success: true, product_id: productId };
   } catch (err) {
     await connection.rollback();
     throw err;

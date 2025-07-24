@@ -4,7 +4,6 @@ const insertProduct = async (req, res) => {
   try {
     const productData = req.body;
     const userId = req.session?.user?.id;
-    console.log("Checking product data: ", productData)
 
     await insertProductQuery(productData, userId);
 
