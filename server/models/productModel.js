@@ -5,12 +5,12 @@ exports.insertProductQuery = async (productData, userId) => {
   const connection = await mySQL.getConnection();
 
   try {
+    // 🔒 Set isolation level to SERIALIZABLE
+    await connection.query('SET TRANSACTION ISOLATION LEVEL SERIALIZABLE');
     await connection.beginTransaction();
 
-    // ✅ 1. Generate UUID manually
     const productId = uuidv4();
 
-    // ✅ 2. Insert into product with UUID
     const productQuery = `
       INSERT INTO product 
       (product_id, product_name, product_description, price, stock_quantity, image_url) 
@@ -22,11 +22,10 @@ exports.insertProductQuery = async (productData, userId) => {
       productData.product_name,
       productData.product_description,
       productData.price,
-      0, // default stock_quantity
+      0,
       JSON.stringify(productData.image_urls || []),
     ]);
 
-    // ✅ 3. Insert into product_logs with correct productId
     const productLogsQuery = `
       INSERT INTO product_logs 
       (product_id, user_id, product_name, product_description, price, image_url, is_active, action_type) 
@@ -40,7 +39,7 @@ exports.insertProductQuery = async (productData, userId) => {
       productData.product_description,
       productData.price,
       JSON.stringify(productData.image_urls || []),
-      1, // is_active
+      1,
       'INSERT',
     ]);
 
@@ -156,9 +155,10 @@ exports.updateProduct = async (productId, fields) => {
   const connection = await mySQL.getConnection();
 
   try {
+    // 🔒 Set transaction isolation level
+    await connection.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     await connection.beginTransaction();
 
-    // Prepare update statement
     const updateQuery = `
       UPDATE product
       SET 
@@ -184,7 +184,6 @@ exports.updateProduct = async (productId, fields) => {
       throw new Error("Product not found");
     }
 
-    // Fetch updated product
     const [rows] = await connection.query(
       "SELECT * FROM product WHERE product_id = ?",
       [productId]
