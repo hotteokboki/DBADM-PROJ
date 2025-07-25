@@ -45,10 +45,11 @@ const setProductInactiveController = async (req, res) => {
 
 const updateProductInformation = async (req, res) => {
   const { productId } = req.params;
-  const fields = req.body
+  const fields = req.body;
+  const userId = req.session?.user?.id;
 
   try {
-    const updatedProduct = await updateProduct(productId, fields);
+    const updatedProduct = await updateProduct(productId, fields, userId);
 
     res.status(200).json({
       success: true,

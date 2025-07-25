@@ -28,8 +28,8 @@ exports.insertProductQuery = async (productData, userId) => {
 
     const productLogsQuery = `
       INSERT INTO product_logs 
-      (product_id, user_id, product_name, product_description, price, image_url, is_active, action_type) 
-      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+      (product_id, user_id, product_name, product_description, price, image_url, is_active, action_type, stock_quantity) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     await connection.query(productLogsQuery, [
@@ -41,6 +41,7 @@ exports.insertProductQuery = async (productData, userId) => {
       JSON.stringify(productData.image_urls || []),
       1,
       'INSERT',
+      0
     ]);
 
     await connection.commit();
@@ -151,11 +152,10 @@ exports.setProductInactive = async (productId, userId) => {
   }
 }
 
-exports.updateProduct = async (productId, fields) => {
+exports.updateProduct = async (productId, fields, userId) => {
   const connection = await mySQL.getConnection();
 
   try {
-    // 🔒 Set transaction isolation level
     await connection.query('SET TRANSACTION ISOLATION LEVEL REPEATABLE READ');
     await connection.beginTransaction();
 
@@ -188,9 +188,28 @@ exports.updateProduct = async (productId, fields) => {
       "SELECT * FROM product WHERE product_id = ?",
       [productId]
     );
+    const product = rows[0];
+
+    const LogQuery = `
+      INSERT INTO product_logs 
+      (product_id, user_id, product_name, product_description, price, image_url, is_active, action_type, stock_quantity) 
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `;
+
+    await connection.query(LogQuery, [
+      productId,
+      userId,
+      fields.product_name,
+      fields.product_description,
+      fields.price,
+      JSON.stringify([]), // or use existing product.image_url if available
+      1,                  // is_active (assume active)
+      'UPDATE',           // action_type
+      fields.stock_quantity
+    ]);
 
     await connection.commit();
-    return rows[0];
+    return product;
   } catch (err) {
     await connection.rollback();
     console.error("Error updating product:", err.message);
